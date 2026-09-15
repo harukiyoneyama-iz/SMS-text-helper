@@ -1,0 +1,125 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(git pull:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npx jest:*)",
+      "mcp__codex__codex",
+      "mcp__codex__codex-reply"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*credentials.json)",
+      "Read(**/*credentials.yml)",
+      "Read(**/*credentials.yaml)",
+      "Read(**/*credentials.toml)",
+      "Read(**/*credentials.txt)",
+      "Read(**/*credentials.env)",
+      "Read(**/*credentials.conf)",
+      "Read(**/*credentials.cfg)",
+      "Read(**/*credentials.ini)",
+      "Read(**/*credentials.sh)",
+      "Read(**/.credentials)",
+      "Read(**/.npmrc)",
+      "Read(**/.netrc)",
+      "Read(**/.pypirc)",
+      "Read(**/*service-account*.json)",
+      "Read(**/terraform.tfstate)",
+      "Read(**/terraform.tfstate.backup)",
+      "Read(**/.kube/config)",
+      "Read(**/.aws/credentials)",
+      "Read(**/.aws/config)",
+      "Read(**/.ssh/id_*)",
+      "Read(**/.git-credentials)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/*.jks)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(env)",
+      "Bash(printenv)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard *)",
+      "Bash(rm -rf *)",
+      "Bash(rm -r /*)",
+      "Bash(chmod 777 *)",
+      "Bash(npm install *)",
+      "Bash(npm install -g *)",
+      "Bash(npm i *)",
+      "Bash(npm add *)",
+      "Bash(yarn add *)",
+      "Bash(pip install *)",
+      "Bash(pip install --user *)",
+      "Bash(uv add *)",
+      "Bash(poetry add *)",
+      "WebFetch"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/node/.claude/hooks/block-secret-read.sh"
+          },
+          {
+            "type": "command",
+            "command": "/home/node/.claude/hooks/block-destructive.sh"
+          },
+          {
+            "type": "command",
+            "command": "/home/node/.claude/hooks/block-host-dev.sh"
+          },
+          {
+            "type": "command",
+            "command": "/home/node/.claude/hooks/validate-package-install.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "sandbox": {
+    "enabled": false,
+    "failIfUnavailable": false,
+    "allowUnsandboxedCommands": true,
+    "network": {
+      "allowedDomains": [
+        "registry.npmjs.org",
+        "github.com",
+        "api.github.com",
+        "objects.githubusercontent.com",
+        "api.anthropic.com",
+        "claude.ai",
+        "api.openai.com",
+        "auth.openai.com",
+        "platform.openai.com",
+        "chatgpt.com",
+        "cdn.openai.com",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "dl.google.com",
+        "storage.googleapis.com",
+        "www.googleapis.com"
+      ]
+    },
+    "filesystem": {
+      "denyRead": [
+        "~/.aws",
+        "~/.ssh",
+        "~/.gnupg",
+        "~/.config/gcloud"
+      ]
+    }
+  },
+  "showThinkingSummaries": true,
+  "_version": "2026-07-08.1",
+  "_versionNote": "sandbox disabled (2026-07-02): WSL2/devcontainer は非特権 user namespace を許さず bubblewrap が起動できない(毎コマンド fail-open のノイズ)。保護は 4 hooks(secret-read/destructive/host-dev/package-install) + settings deny + L3/L4 iptables firewall(init-firewall.sh) + コンテナ隔離で担保。Windows host は settings.windows.json(同じく sandbox なし)。2026-07-08: pnpm install/add を deny から除去(コンテナ内はhookのvalidate-package-install.shが既知パッケージ照合で判定する設計に統一。npm installはdenyのまま=pnpm一本化)。"
+}

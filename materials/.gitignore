@@ -1,0 +1,5 @@
+# このフォルダの中身は git 管理外（資料の一時置き場。GitHub に上げない）
+# .gitignore と README.md だけを git 管理し、フォルダ自体は clone 直後から存在させる
+*
+!.gitignore
+!README.md

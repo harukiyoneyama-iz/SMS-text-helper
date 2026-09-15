@@ -1,0 +1,39 @@
+{
+  "name": "${localWorkspaceFolderBasename}",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/${localWorkspaceFolderBasename},type=bind",
+  "workspaceFolder": "/workspace/${localWorkspaceFolderBasename}",
+  "runArgs": [
+    "--memory=4g",
+    "--cpus=2",
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
+  "remoteUser": "node",
+  "updateRemoteUserUID": true,
+  "forwardPorts": [3000],
+  "mounts": [
+    "source=claude-home-${localWorkspaceFolderBasename},target=/home/node/.claude,type=volume",
+    "source=${localEnv:HOME}/.claude-memory/${localWorkspaceFolderBasename},target=/home/node/.claude/projects/-workspace-${localWorkspaceFolderBasename},type=bind",
+    "source=claude-session-env-${localWorkspaceFolderBasename},target=/home/node/.claude/session-env,type=volume",
+    "source=codex-home-${localWorkspaceFolderBasename},target=/home/node/.codex,type=volume"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "postCreateCommand": "bash -lc 'if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; elif [ -f package-lock.json ]; then npm ci; elif [ -f package.json ]; then echo \"[ERROR] lockfile が無いため依存インストールを中止（サプライチェーン対策で lockfile 必須）。ガイドラインは pnpm 推奨: コンテナ内で pnpm install --lockfile-only を実行 → pnpm-lock.yaml を commit。詳細は ONBOARDING.md Step 4-3\" >&2; exit 1; else echo \"package.json なし: 依存インストールをスキップ\"; fi'",
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && sudo /usr/local/bin/fix-permissions.sh ${localWorkspaceFolderBasename} && { bash /usr/local/bin/refresh-claude-config.sh || true; }",
+  "waitFor": "postStartCommand"
+}

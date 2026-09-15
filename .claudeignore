@@ -1,0 +1,22 @@
+# Claude Code が走査しないファイル/ディレクトリ
+# 大量ファイルの走査を避けることで、起動・応答を軽くする（freeze 対策の一部）。
+
+# 依存・ビルド成果物（再生成可能、走査不要）
+node_modules/
+node_modules.disabled/
+.next/
+.next.disabled/
+dist/
+build/
+coverage/
+.turbo/
+.vite/
+
+# git 内部（走査不要・大量ファイル）
+.git/
+
+# ログ・バックアップ
+*.log
+*.bak
+.devcontainer/*.bak
+.devcontainer/claude-config.bak/

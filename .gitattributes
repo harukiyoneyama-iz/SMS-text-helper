@@ -1,0 +1,39 @@
+# 改行コード正規化（プロジェクト共通の最小セット。sync-template で配布）
+#
+# 目的: Linux コンテナ内で実行されるシェルスクリプト / git hook を LF 固定にし、
+#       Windows 端末で CRLF 化 →「bad interpreter: /bin/bash^M」で hook が起動失敗
+#       （= gitleaks 等の防御が静かに無効化）するのを防ぐ。
+
+# デフォルト: テキストは自動判定、リポジトリ内の改行は LF
+* text=auto eol=lf
+
+# シェルスクリプト類は必ず LF（コンテナ内 Linux bash で実行されるため）
+*.sh    text eol=lf
+*.bash  text eol=lf
+
+# git hook（.githooks/pre-commit / pre-push 等）は拡張子が無いので *.sh では守れない
+# 明示的にパス指定で LF 固定（重要 — 本ファイルを配布する最大の目的）
+.githooks/*    text eol=lf
+
+# PowerShell は Windows ネイティブ。CRLF を維持
+*.ps1   text eol=crlf
+*.psm1  text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+
+# 設定・ドキュメントは LF
+*.json  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.md    text eol=lf
+*.toml  text eol=lf
+
+# バイナリ（改行変換しない）
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary

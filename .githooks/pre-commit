@@ -1,0 +1,53 @@
+#!/bin/bash
+# guideline pre-commit hook: コミット前に gitleaks で秘密情報をスキャン
+#
+# 有効化（リポジトリごとに 1 回）:
+#   git config core.hooksPath .githooks
+#
+# gitleaks インストール（Windows 用、いずれか 1 つ）:
+#   scoop install gitleaks
+#   choco install gitleaks
+#   または https://github.com/gitleaks/gitleaks/releases から zip 取得 → PATH 通った場所に置く
+#
+# Mac:
+#   brew install gitleaks
+#
+# Linux:
+#   apt / dnf 経由、または https://github.com/gitleaks/gitleaks/releases
+
+set -euo pipefail
+
+# gitleaks 未導入なら commit を止める（fail-closed）。
+# エンタープライズ展開では「未導入端末は無防備」を許さないため、初回詰みより安全を優先。
+# 事前に全端末へ gitleaks を一斉導入しておくこと（ONBOARDING.md Step 1）。
+if ! command -v gitleaks >/dev/null 2>&1; then
+  {
+    echo "⛔ gitleaks が見つかりません。秘密情報スキャンができないため commit を中止しました。"
+    echo ""
+    echo "   導入してから再度 commit してください:"
+    echo "     Windows: scoop install gitleaks  または  choco install gitleaks"
+    echo "     Mac:     brew install gitleaks"
+    echo "     Linux:   GitHub Releases のバイナリを PATH に配置"
+    echo ""
+    echo "   導入確認: gitleaks version"
+  } >&2
+  exit 1
+fi
+
+# staged の差分のみをスキャン（コミット前なので --staged）
+if gitleaks protect --staged --redact --no-banner; then
+  exit 0
+else
+  {
+    echo ""
+    echo "⛔ gitleaks が秘密情報の疑いを検出しました。"
+    echo ""
+    echo "対処:"
+    echo "  1. 上記の出力で該当ファイル・行を確認"
+    echo "  2. その値が本当に秘密情報なら、.env 等に移動してから git restore でステージから外す"
+    echo "  3. 誤検知なら、.gitleaks.toml で allowlist を追加（リポジトリルートに配置）"
+    echo ""
+    echo "緊急時のみ: git commit --no-verify （非推奨。ログに残ります）"
+  } >&2
+  exit 1
+fi
