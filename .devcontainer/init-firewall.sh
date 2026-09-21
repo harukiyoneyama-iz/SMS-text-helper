@@ -85,6 +85,10 @@ fi
 REQUIRED_DOMAINS=(
   "registry.npmjs.org"            # npm パッケージ取得
   "api.anthropic.com"             # Claude Code API
+  # 本プロジェクト（SMS文例検索ツール）の中核。繋がらなければ何もできないため必須扱いにする。
+  # 認証に使う oauth2.googleapis.com / accounts.google.com は OPTIONAL 側に既出。
+  "bigquery.googleapis.com"       # BigQuery API（gnote_sms_catalog のビュー参照）
+  "iamcredentials.googleapis.com" # サービスアカウント impersonation（キーレス認証に必須）
 )
 
 # 公式デフォルト + guideline追加ドメイン（解決失敗時は警告のみ）

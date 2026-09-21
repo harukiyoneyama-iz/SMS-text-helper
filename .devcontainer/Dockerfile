@@ -52,6 +52,32 @@ RUN set -eu; \
     chmod +x /usr/local/bin/gitleaks; \
     gitleaks version
 
+# ============================================================
+# Google Cloud CLI（gcloud）— BigQuery 接続の「認証」専用
+# 理由: サービスアカウント鍵をコンテナに置かない方針のため、利用者本人が
+#       `gcloud auth login` / `gcloud auth application-default login` で都度認証する。
+#       クエリ実行自体は Node の @google-cloud/bigquery が行うので、
+#       gcloud は認証情報を用意するためだけに入れる（bq コマンドも同梱される）。
+# supply chain 対策: Google 公式 apt リポジトリを GPG 署名鍵つきで登録し、署名検証を通った
+#       パッケージのみ導入する。gitleaks 等と違い version pin はしていない —— apt リポジトリは
+#       旧版を保持しない場合があり、pin するとある日突然ビルドが壊れるため。
+#       固定したい場合は google-cloud-cli=<version>-0 の形で指定する。
+# 取得は build 時のため runtime の init-firewall(default-deny)の影響は受けない。
+# ⚠️ このブロックは guideline テンプレート由来ではない本プロジェクト固有の追加。
+#    sync-template.sh --apply で上書きされるため、実行後は復元すること（docs/DEVELOPMENT_PLAN.md §④）。
+# ============================================================
+RUN set -eu; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends gnupg; \
+    curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+      | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg; \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" \
+      > /etc/apt/sources.list.d/google-cloud-sdk.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends google-cloud-cli; \
+    rm -rf /var/lib/apt/lists/*; \
+    gcloud --version
+
 EXPOSE 3000
 
 # ネットワークファイアウォール
