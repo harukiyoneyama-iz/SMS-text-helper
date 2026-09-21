@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMS文例検索ツール（画面モックアップ）</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --border: #dfe3e8;
+    --text: #1f2933;
+    --text-sub: #616e7c;
+    --accent: #2b6cb0;
+    --accent-soft: #ebf4ff;
+    --chip-bg: #eef1f5;
+    --chip-active-bg: #2b6cb0;
+    --chip-active-text: #ffffff;
+    --warn-bg: #fff5f5;
+    --warn-border: #feb2b2;
+    --warn-text: #c53030;
+    --ok-bg: #f0fff4;
+    --ok-text: #2f855a;
+    --mask-bg: #2d3748;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+  header.app-header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .header-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .header-title h1 {
+    font-size: 18px;
+    margin: 0;
+  }
+  .badge-mock {
+    background: #fefcbf;
+    color: #744210;
+    border: 1px solid #f6e05e;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+  }
+  .updated-at {
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .mask-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mask-toggle-label {
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e0;
+    transition: .15s;
+    border-radius: 24px;
+  }
+  .slider::before {
+    position: absolute;
+    content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .15s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background-color: #d69e2e; }
+  input:checked + .slider::before { transform: translateX(20px); }
+
+  main {
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 16px;
+    padding: 16px 20px 60px;
+    align-items: flex-start;
+  }
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    position: sticky;
+    top: 78px;
+  }
+  .sidebar h2 {
+    font-size: 13px;
+    margin: 0 0 8px;
+    color: var(--text-sub);
+  }
+  .filter-group {
+    margin-bottom: 16px;
+  }
+  .filter-group label.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--text-sub);
+  }
+  select, input[type="text"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--text);
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .content-area {
+    flex: 1;
+    min-width: 0;
+  }
+  .search-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-bar input[type="text"] { flex: 1; min-width: 200px; }
+  .sort-select { width: auto; min-width: 180px; }
+
+  .tag-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .tag-chip {
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .tag-chip .count {
+    color: var(--text-sub);
+    font-weight: bold;
+  }
+  .tag-chip.active {
+    background: var(--chip-active-bg);
+    color: var(--chip-active-text);
+    border-color: var(--chip-active-bg);
+  }
+  .tag-chip.active .count { color: #e2e8f0; }
+  .tag-chip.uncategorized {
+    border-style: dashed;
+  }
+
+  .result-meta {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+  }
+
+  .card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color .1s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .card-title {
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0 0 2px;
+  }
+  .card-title.fallback {
+    font-weight: normal;
+    color: var(--text-sub);
+    font-style: italic;
+  }
+  .card-company {
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .card-company.fallback-id {
+    font-style: italic;
+  }
+  .card-stats {
+    text-align: right;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .send-count {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--accent);
+  }
+  .status-pill {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    margin-top: 2px;
+  }
+  .status-active { background: var(--ok-bg); color: var(--ok-text); }
+  .status-stopped { background: #edf2f7; color: #718096; }
+  .card-body-excerpt {
+    font-size: 12.5px;
+    color: var(--text);
+    margin: 8px 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .mask-span {
+    background: var(--mask-bg);
+    color: var(--mask-bg);
+    border-radius: 2px;
+    padding: 0 2px;
+    user-select: none;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .mini-tag {
+    font-size: 11px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 1px 7px;
+    border-radius: 8px;
+  }
+  .mini-tag.warn {
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    border: 1px solid var(--warn-border);
+  }
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .btn {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn:active { transform: translateY(1px); }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-sub);
+    background: var(--panel);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+
+  /* 詳細パネル（右スライドオーバー風） */
+  .detail-overlay {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 420px;
+    max-width: 92vw;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    box-shadow: -4px 0 16px rgba(0,0,0,0.08);
+    transform: translateX(100%);
+    transition: transform .18s ease-out;
+    z-index: 50;
+    overflow-y: auto;
+  }
+  .detail-overlay.open { transform: translateX(0); }
+  .detail-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .detail-header h3 { margin: 0 0 4px; font-size: 15px; }
+  .close-btn {
+    background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-sub); line-height: 1;
+  }
+  .detail-body { padding: 16px; }
+  .detail-section {
+    margin-bottom: 16px;
+  }
+  .detail-section h4 {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin: 0 0 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px;
+  }
+  .full-body-text {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 13px;
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+  }
+  .kv-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .kv-table td { padding: 4px 4px; vertical-align: top; }
+  .kv-table td.k { color: var(--text-sub); width: 40%; white-space: nowrap; }
+  .overlay-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.15); z-index: 40;
+    display: none;
+  }
+  .overlay-backdrop.show { display: block; }
+
+  .copy-toast {
+    position: fixed;
+    bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: #1a202c; color: #fff; padding: 8px 18px; border-radius: 20px;
+    font-size: 13px; opacity: 0; transition: .15s;
+    pointer-events: none; z-index: 100;
+  }
+  .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .footer-note {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    font-size: 11px;
+    color: var(--text-sub);
+  }
+
+  @media (max-width: 860px) {
+    main { flex-direction: column; }
+    .sidebar { width: 100%; position: static; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-row">
+    <div class="header-title">
+      <h1>SMS文例検索ツール</h1>
+      <span class="badge-mock">画面モックアップ（ダミーデータ）</span>
+    </div>
+    <div class="mask-toggle-wrap">
+      <span class="updated-at" id="updatedAt"></span>
+      <span class="mask-toggle-label">伏せモード</span>
+      <label class="switch">
+        <input type="checkbox" id="maskToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+</header>
+
+<main>
+  <aside class="sidebar">
+    <h2>絞り込み</h2>
+    <div class="filter-group">
+      <label class="field-label">クライアント</label>
+      <select id="filterClient"></select>
+    </div>
+    <div class="filter-group">
+      <label class="field-label">フランチャイズ</label>
+      <select id="filterFranchise"></select>
+    </div>
+    <div class="filter-group">
+      <label class="field-label">利用シーン</label>
+      <select id="filterScene"></select>
+    </div>
+    <div class="filter-group">
+      <label class="field-label">車検・点検 何ヶ月前</label>
+      <select id="filterTiming"></select>
+    </div>
+    <div class="filter-group">
+      <label class="field-label">SMSの型</label>
+      <select id="filterType">
+        <option value="">すべて</option>
+        <option value="入庫連動">入庫連動</option>
+        <option value="テキスト型">テキスト型</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="checkbox-row">
+        <input type="checkbox" id="filterActiveOnly">
+        <label for="filterActiveOnly">使用中のみ</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="filterIncludeTest">
+        <label for="filterIncludeTest">テスト用を含める（既定OFF）</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="filterIncludePlatelike">
+        <label for="filterIncludePlatelike">ナンバー記載を含める（既定OFF）</label>
+      </div>
+    </div>
+    <button class="btn" id="resetFilters" style="width:100%;">絞り込みをリセット</button>
+  </aside>
+
+  <div class="content-area">
+    <div class="search-bar">
+      <input type="text" id="keyword" placeholder="キーワード検索（本文・テンプレート名）">
+      <select class="sort-select" id="sortOrder">
+        <option value="send_count_desc">よく送られている順</option>
+        <option value="modified_desc">新しい順</option>
+      </select>
+    </div>
+
+    <div class="tag-chip-row" id="sceneChips"></div>
+
+    <div class="result-meta" id="resultMeta"></div>
+
+    <div class="card-list" id="cardList"></div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      条件に一致する文例がありません。絞り込みを緩めてください。
+    </div>
+  </div>
+</main>
+
+<div class="footer-note">
+  ※ このモックアップの文例・会社名・電話番号・URLはすべて架空のものです。実データは含まれていません。<br>
+  ※ 一括CSVエクスポートは受け入れ条件上、意図的に付けていません（コピーのみ）。
+</div>
+
+<div class="overlay-backdrop" id="overlayBackdrop"></div>
+<div class="detail-overlay" id="detailOverlay"></div>
+<div class="copy-toast" id="copyToast">コピーしました</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ----------------------------------------------------------------
+  // ダミーデータ（すべて架空）
+  // ----------------------------------------------------------------
+  var TEMPLATES = [
+    {
+      id: 1, templateName: "車検5ヶ月前案内", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "車検誘致", timing: "5ヶ月前", smsType: "テキスト型",
+      status: "使用中", sendCount: 53116,
+      body: "〇〇様\n車検のコバック岡山円山店です。お車の車検が近づいてまいりました。お得な早期割引をご用意しております。ご予約はお電話（086-000-1111）まで。",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: true, callListOnly: false,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2025-11-02", modified: "2026-08-20",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 2, templateName: "", company: "コバック速太郎 松山店", clientId: 587,
+      franchise: "車検の速太郎", scene: "車検お礼", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 21840,
+      body: "〇〇様\nこの度は車検の速太郎松山店をご利用いただきありがとうございました。またのご来店を心よりお待ちしております。",
+      reservedTel: "089-000-2222", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sokutaro_matsuyama", modifiedBy: "u_sokutaro_matsuyama",
+      created: "2025-09-10", modified: "2026-06-11",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 3, templateName: "12ヶ月点検リマインド", company: "", clientId: 218,
+      franchise: "", scene: "12ヶ月点検", timing: "1ヶ月前", smsType: "入庫連動",
+      status: "使用中", sendCount: 18420,
+      body: "〇〇様\n12ヶ月点検のお時期が近づいております。下記URLよりご予約ください。\nhttps://example-reserve.jp/nyuko/a1b2c3",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "https://example-reserve.jp/nyuko/a1b2c3",
+      deliveryType: "満了前", excludeReserved: true, callListOnly: false,
+      createdBy: "u_izplanner_02", modifiedBy: "u_izplanner_02",
+      created: "2025-12-01", modified: "2026-07-30",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 4, templateName: "車検証準備のご案内", company: "宇佐美モータース仙台", clientId: 1042,
+      franchise: "宇佐美", scene: "車検証準備", timing: "2ヶ月前", smsType: "テキスト型",
+      status: "使用中", sendCount: 15230,
+      body: "〇〇様\n車検のお手続きに車検証が必要です。お忘れのないようご準備をお願いいたします。ご不明点は022-000-3333まで。",
+      reservedTel: "022-000-3333", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: false, callListOnly: false,
+      createdBy: "u_usami_sendai", modifiedBy: "u_usami_sendai",
+      created: "2025-10-05", modified: "2026-05-18",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 5, templateName: "オイル交換のご案内", company: "ピットボーイ広島", clientId: 774,
+      franchise: "ピットボーイ", scene: "オイル交換", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 12980,
+      body: "〇〇様\nそろそろオイル交換の時期です。ピットボーイ広島店では即日対応も可能です。お気軽にお立ち寄りください。",
+      reservedTel: "082-000-4444", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_pitboy_hiroshima", modifiedBy: "u_pitboy_hiroshima",
+      created: "2026-01-15", modified: "2026-08-02",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 6, templateName: "18ヶ月点検案内", company: "ENEOS青森中央SS", clientId: 933,
+      franchise: "ENEOS", scene: "18ヶ月点検", timing: "1ヶ月前", smsType: "入庫連動",
+      status: "使用中", sendCount: 9820,
+      body: "〇〇様\n18ヶ月点検のご案内です。下記よりご予約いただけます。\nhttps://example-reserve.jp/nyuko/z9y8x7",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "https://example-reserve.jp/nyuko/z9y8x7",
+      deliveryType: "満了前", excludeReserved: true, callListOnly: false,
+      createdBy: "u_eneos_aomori", modifiedBy: "u_eneos_aomori",
+      created: "2025-08-22", modified: "2026-04-09",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 7, templateName: "6ヶ月点検のお願い", company: "", clientId: 446,
+      franchise: "", scene: "6ヶ月点検", timing: "1ヶ月前", smsType: "テキスト型",
+      status: "使用中", sendCount: 8710,
+      body: "〇〇様\n6ヶ月点検のお時期です。安全運転のためにも早めのご入庫をお願いいたします。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: false, callListOnly: false,
+      createdBy: "u_izplanner_03", modifiedBy: "u_izplanner_03",
+      created: "2025-07-01", modified: "2026-03-14",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 8, templateName: "タイヤ交換キャンペーン", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "タイヤ", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 7650,
+      body: "〇〇様\n冬タイヤ交換キャンペーン実施中！車検のコバック岡山円山店（086-000-1111）まで。",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2025-11-20", modified: "2026-01-08",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 9, templateName: "コーティング新登場", company: "ピットボーイ広島", clientId: 774,
+      franchise: "ピットボーイ", scene: "コーティング", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 6210,
+      body: "〇〇様\n新しいボディコーティングメニューが登場しました。詳細はスタッフまでお尋ねください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_pitboy_hiroshima", modifiedBy: "u_pitboy_hiroshima",
+      created: "2026-02-04", modified: "2026-06-30",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 10, templateName: "お乗り換えのご提案", company: "コバック速太郎 松山店", clientId: 587,
+      franchise: "車検の速太郎", scene: "車販・乗り換え", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 5430,
+      body: "〇〇様\nお車の乗り換えをご検討でしたら、お得な下取りキャンペーンをご案内できます。",
+      reservedTel: "089-000-2222", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sokutaro_matsuyama", modifiedBy: "u_sokutaro_matsuyama",
+      created: "2025-06-18", modified: "2026-02-22",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 11, templateName: "夏季休業のご案内", company: "宇佐美モータース仙台", clientId: 1042,
+      franchise: "宇佐美", scene: "長期休暇案内", timing: "", smsType: "テキスト型",
+      status: "停止", sendCount: 4980,
+      body: "〇〇様\n夏季休業期間のご案内です。休業中の緊急連絡は022-000-3333までお願いいたします。",
+      reservedTel: "022-000-3333", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_usami_sendai", modifiedBy: "u_usami_sendai",
+      created: "2025-07-25", modified: "2025-08-10",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 12, templateName: "公式アプリのご案内", company: "ENEOS青森中央SS", clientId: 933,
+      franchise: "ENEOS", scene: "LINE・アプリ誘導", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 4320,
+      body: "〇〇様\n公式アプリから会員限定クーポンを配布中です。\nhttps://example-app.jp/coupon/eneos933",
+      reservedTel: "", reservedUrl: "https://example-app.jp/coupon/eneos933", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_eneos_aomori", modifiedBy: "u_eneos_aomori",
+      created: "2025-09-30", modified: "2026-01-19",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 13, templateName: "ご来店予約リマインド", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "予約リマインド", timing: "", smsType: "入庫連動",
+      status: "使用中", sendCount: 3980,
+      body: "〇〇様\n明日はご来店予約日です。お車でお越しの際はお気をつけてお越しください。\nhttps://example-reserve.jp/nyuko/reminder01",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "https://example-reserve.jp/nyuko/reminder01",
+      deliveryType: "定型", excludeReserved: false, callListOnly: true,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2026-03-01", modified: "2026-08-15",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 14, templateName: "3ヶ月点検のご案内", company: "", clientId: 493,
+      franchise: "", scene: "3ヶ月点検", timing: "1ヶ月前", smsType: "テキスト型",
+      status: "使用中", sendCount: 3110,
+      body: "〇〇様\n納車後3ヶ月点検のお時期です。ご都合の良い日程でご来店ください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: false, callListOnly: false,
+      createdBy: "u_izplanner_02", modifiedBy: "u_izplanner_02",
+      created: "2025-05-11", modified: "2025-12-01",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 15, templateName: "春の車検キャンペーン", company: "コバック速太郎 松山店", clientId: 587,
+      franchise: "車検の速太郎", scene: "キャンペーン・セール", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 2870,
+      body: "〇〇様\n春の車検キャンペーンを実施中です。車検の速太郎松山店（089-000-2222）までお問い合わせください。",
+      reservedTel: "089-000-2222", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sokutaro_matsuyama", modifiedBy: "u_sokutaro_matsuyama",
+      created: "2026-02-20", modified: "2026-03-05",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 16, templateName: "リマインド：入庫前日", company: "宇佐美モータース仙台", clientId: 1042,
+      franchise: "宇佐美", scene: "予約リマインド", timing: "", smsType: "入庫連動",
+      status: "使用中", sendCount: 2650,
+      body: "〇〇様\n明日ご入庫予定です。お忘れ物のないようお越しください。\nhttps://example-reserve.jp/nyuko/reminder02",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "https://example-reserve.jp/nyuko/reminder02",
+      deliveryType: "定型", excludeReserved: false, callListOnly: true,
+      createdBy: "u_usami_sendai", modifiedBy: "u_usami_sendai",
+      created: "2026-01-08", modified: "2026-07-22",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 17, templateName: "", company: "ピットボーイ広島", clientId: 774,
+      franchise: "ピットボーイ", scene: "", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 2110,
+      body: "〇〇様\n本日はご来店ありがとうございました。次回のご来店を心よりお待ちしております。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_pitboy_hiroshima", modifiedBy: "u_pitboy_hiroshima",
+      created: "2025-04-19", modified: "2025-11-02",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 18, templateName: "満了後フォロー", company: "ENEOS青森中央SS", clientId: 933,
+      franchise: "ENEOS", scene: "車検誘致", timing: "満了後1ヶ月", smsType: "テキスト型",
+      status: "使用中", sendCount: 1920,
+      body: "〇〇様\n車検の期限が過ぎております。お早めのご相談をお願いいたします。022-000-9999までご連絡ください。",
+      reservedTel: "022-000-9999", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了後", excludeReserved: false, callListOnly: false,
+      createdBy: "u_eneos_aomori", modifiedBy: "u_eneos_aomori",
+      created: "2025-10-30", modified: "2026-04-01",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 19, templateName: "", company: "", clientId: 218,
+      franchise: "", scene: "", timing: "", smsType: "テキスト型",
+      status: "停止", sendCount: 1430,
+      body: "〇〇様\nこの度は誠にありがとうございました。またのご利用をお待ちしております。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_izplanner_02", modifiedBy: "u_izplanner_02",
+      created: "2025-03-12", modified: "2025-09-01",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 20, templateName: "車検証準備リマインド2", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "車検証準備", timing: "1ヶ月前", smsType: "テキスト型",
+      status: "使用中", sendCount: 1280,
+      body: "〇〇様\n車検証のご準備をお忘れなく。ご不明点は車検のコバック岡山円山店（086-000-1111）まで。",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: false, callListOnly: false,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2026-04-02", modified: "2026-08-28",
+      isTest: false, hasPlatelike: false
+    },
+    // --- テスト用（既定で除外） ---
+    {
+      id: 21, templateName: "配信テスト", company: "西崎自動車", clientId: 1001,
+      franchise: "", scene: "", timing: "", smsType: "テキスト型",
+      status: "停止", sendCount: 3,
+      body: "テスト送信です。無視してください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2026-01-01", modified: "2026-01-01",
+      isTest: true, hasPlatelike: false
+    },
+    {
+      id: 22, templateName: "テスト", company: "コバック速太郎 松山店", clientId: 587,
+      franchise: "", scene: "", timing: "", smsType: "テキスト型",
+      status: "停止", sendCount: 1,
+      body: "わ～、テストだよ～",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sokutaro_matsuyama", modifiedBy: "u_sokutaro_matsuyama",
+      created: "2025-12-25", modified: "2025-12-25",
+      isTest: true, hasPlatelike: false
+    },
+    {
+      id: 23, templateName: "", company: "", clientId: 1042,
+      franchise: "", scene: "", timing: "", smsType: "テキスト型",
+      status: "停止", sendCount: 1,
+      body: "ありがとー！これもテスト",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_usami_sendai", modifiedBy: "u_usami_sendai",
+      created: "2025-11-11", modified: "2025-11-11",
+      isTest: true, hasPlatelike: false
+    },
+    // --- ナンバーらしき記載あり（既定で除外） ---
+    {
+      id: 24, templateName: "納車のご案内", company: "ピットボーイ広島", clientId: 774,
+      franchise: "ピットボーイ", scene: "車販・乗り換え", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 640,
+      body: "〇〇様\nご注文いただいたお車（広島300 あ 12-34）の納車準備が整いました。ご都合の良い日をお知らせください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_pitboy_hiroshima", modifiedBy: "u_pitboy_hiroshima",
+      created: "2026-05-14", modified: "2026-08-01",
+      isTest: false, hasPlatelike: true
+    },
+    // --- 未分類（分類辞書に当たらなかったもの。件数付きで見せる） ---
+    {
+      id: 25, templateName: "特別ご案内(西日本エリア)", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 510,
+      body: "〇〇様\n西日本エリア限定の特別ご案内です。詳しくはスタッフまでお尋ねください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2026-06-01", modified: "2026-06-01",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 26, templateName: "冬季メンテナンスのご相談", company: "ENEOS青森中央SS", clientId: 933,
+      franchise: "ENEOS", scene: "", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 420,
+      body: "〇〇様\n冬季のお車の調子についてお気軽にご相談ください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_eneos_aomori", modifiedBy: "u_eneos_aomori",
+      created: "2025-12-10", modified: "2025-12-10",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 27, templateName: "感謝キャンペーンのご案内", company: "宇佐美モータース仙台", clientId: 1042,
+      franchise: "宇佐美", scene: "", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 380,
+      body: "〇〇様\n日頃のご愛顧に感謝し、特別キャンペーンをご用意しました。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_usami_sendai", modifiedBy: "u_usami_sendai",
+      created: "2026-02-14", modified: "2026-02-14",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 28, templateName: "アンケートご協力のお願い", company: "コバック速太郎 松山店", clientId: 587,
+      franchise: "車検の速太郎", scene: "", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 210,
+      body: "〇〇様\nサービス向上のため簡単なアンケートにご協力ください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sokutaro_matsuyama", modifiedBy: "u_sokutaro_matsuyama",
+      created: "2026-03-22", modified: "2026-03-22",
+      isTest: false, hasPlatelike: false
+    },
+    // --- 追加バリエーション（分類軸を厚くする） ---
+    {
+      id: 29, templateName: "車検2ヶ月前案内", company: "コバック速太郎 松山店", clientId: 587,
+      franchise: "車検の速太郎", scene: "車検誘致", timing: "2ヶ月前", smsType: "テキスト型",
+      status: "使用中", sendCount: 9410,
+      body: "〇〇様\n車検の速太郎松山店です。車検満了まで2ヶ月となりました。お早めのご予約をおすすめします。089-000-2222まで。",
+      reservedTel: "089-000-2222", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sokutaro_matsuyama", modifiedBy: "u_sokutaro_matsuyama",
+      created: "2025-09-18", modified: "2026-07-05",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 30, templateName: "車検1ヶ月前・最終案内", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "車検誘致", timing: "1ヶ月前", smsType: "テキスト型",
+      status: "使用中", sendCount: 11200,
+      body: "〇〇様\n車検満了まで残り1ヶ月です。車検のコバック岡山円山店（086-000-1111）へお早めにご連絡ください。",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: true, callListOnly: false,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2025-10-11", modified: "2026-08-30",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 31, templateName: "12ヶ月点検入庫連動案内", company: "ENEOS青森中央SS", clientId: 933,
+      franchise: "ENEOS", scene: "12ヶ月点検", timing: "1ヶ月前", smsType: "入庫連動",
+      status: "使用中", sendCount: 6640,
+      body: "〇〇様\n12ヶ月点検のご案内です。下記よりご予約ください。\nhttps://example-reserve.jp/nyuko/eneos12",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "https://example-reserve.jp/nyuko/eneos12",
+      deliveryType: "満了前", excludeReserved: true, callListOnly: false,
+      createdBy: "u_eneos_aomori", modifiedBy: "u_eneos_aomori",
+      created: "2026-01-25", modified: "2026-06-19",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 32, templateName: "コーティング満了後フォロー", company: "ピットボーイ広島", clientId: 774,
+      franchise: "ピットボーイ", scene: "コーティング", timing: "", smsType: "テキスト型",
+      status: "停止", sendCount: 980,
+      body: "〇〇様\n前回施工いただいたコーティングの効果はいかがですか？メンテナンスもご相談ください。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_pitboy_hiroshima", modifiedBy: "u_pitboy_hiroshima",
+      created: "2025-05-30", modified: "2025-06-15",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 33, templateName: "タイヤ空気圧点検のご案内", company: "宇佐美モータース仙台", clientId: 1042,
+      franchise: "宇佐美", scene: "タイヤ", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 1560,
+      body: "〇〇様\n季節の変わり目はタイヤの空気圧点検がおすすめです。無料点検も承っております。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_usami_sendai", modifiedBy: "u_usami_sendai",
+      created: "2026-03-08", modified: "2026-05-01",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 34, templateName: "年末年始休業案内", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "長期休暇案内", timing: "", smsType: "テキスト型",
+      status: "停止", sendCount: 2230,
+      body: "〇〇様\n年末年始の休業期間をご案内いたします。緊急時は086-000-1111までご連絡ください。",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2025-12-15", modified: "2025-12-15",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 35, templateName: "LINE友だち登録キャンペーン", company: "コバック速太郎 松山店", clientId: 587,
+      franchise: "車検の速太郎", scene: "LINE・アプリ誘導", timing: "", smsType: "テキスト型",
+      status: "使用中", sendCount: 3340,
+      body: "〇〇様\n公式LINEお友だち登録で次回使えるクーポンをプレゼント。\nhttps://example-app.jp/line/sokutaro587",
+      reservedTel: "", reservedUrl: "https://example-app.jp/line/sokutaro587", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sokutaro_matsuyama", modifiedBy: "u_sokutaro_matsuyama",
+      created: "2026-04-18", modified: "2026-07-11",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 36, templateName: "入庫予約前日リマインド(西崎)", company: "西崎自動車", clientId: 1001,
+      franchise: "車検のコバック", scene: "予約リマインド", timing: "", smsType: "入庫連動",
+      status: "使用中", sendCount: 4110,
+      body: "〇〇様\n明日は入庫予約日です。車検のコバック岡山円山店でお待ちしております。\nhttps://example-reserve.jp/nyuko/reminder03",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "https://example-reserve.jp/nyuko/reminder03",
+      deliveryType: "定型", excludeReserved: false, callListOnly: true,
+      createdBy: "u_koback_okayama", modifiedBy: "u_koback_okayama",
+      created: "2026-02-27", modified: "2026-08-05",
+      isTest: false, hasPlatelike: false
+    }
+  ];
+
+  var SCENES = [
+    "車検誘致", "車検お礼", "車検証準備", "12ヶ月点検", "6ヶ月点検", "18ヶ月点検", "3ヶ月点検",
+    "オイル交換", "タイヤ", "コーティング", "車販・乗り換え", "キャンペーン・セール",
+    "長期休暇案内", "LINE・アプリ誘導", "予約リマインド"
+  ];
+  var FRANCHISES = ["車検のコバック", "車検の速太郎", "ENEOS", "宇佐美", "ピットボーイ"];
+  var TIMINGS = ["1ヶ月前", "2ヶ月前", "5ヶ月前", "満了後1ヶ月"];
+
+  // 伏せモードでマスクする対象（本文中に直書きされた店舗名。列を隠すだけでは不十分なため）
+  var STORE_NAME_PATTERNS = [
+    "車検のコバック岡山円山店", "車検の速太郎松山店", "ピットボーイ広島(店)?", "ENEOS青森中央SS",
+    "宇佐美モータース仙台", "西崎自動車"
+  ];
+  var PHONE_REGEX = /0\d{1,4}-\d{2,4}-\d{4}/g;
+  var URL_REGEX = /https?:\/\/[^\s]+/g;
+
+  // ----------------------------------------------------------------
+  // 状態
+  // ----------------------------------------------------------------
+  var state = {
+    keyword: "",
+    client: "",
+    franchise: "",
+    scene: "",
+    timing: "",
+    smsType: "",
+    activeOnly: false,
+    includeTest: false,
+    includePlatelike: false,
+    sort: "send_count_desc",
+    masked: false,
+    selectedId: null
+  };
+
+  // ----------------------------------------------------------------
+  // ヘルパー
+  // ----------------------------------------------------------------
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function maskText(text) {
+    if (!text) return text;
+    var out = esc(text);
+    STORE_NAME_PATTERNS.forEach(function (pat) {
+      out = out.replace(new RegExp(pat, "g"), function (m) {
+        return '<span class="mask-span">' + "●".repeat(Math.max(4, m.length / 2)) + '</span>';
+      });
+    });
+    out = out.replace(PHONE_REGEX, function (m) {
+      return '<span class="mask-span">' + "0●●-●●●-●●●●".slice(0, m.length) + '</span>';
+    });
+    out = out.replace(URL_REGEX, function (m) {
+      return '<span class="mask-span">' + "https://●●●●●●●●●●●●●●●" + '</span>';
+    });
+    return out;
+  }
+
+  function maskCompany(name) {
+    if (!name) return name;
+    return state.masked ? "●●●●●●" : esc(name);
+  }
+
+  function renderBody(text, masked) {
+    return masked ? maskText(text) : esc(text);
+  }
+
+  function visibleTemplates() {
+    return TEMPLATES.filter(function (t) {
+      if (!state.includeTest && t.isTest) return false;
+      if (!state.includePlatelike && t.hasPlatelike) return false;
+      return true;
+    });
+  }
+
+  function filtered() {
+    var kw = state.keyword.trim().toLowerCase();
+    return visibleTemplates().filter(function (t) {
+      if (state.client && String(t.clientId) !== state.client) return false;
+      if (state.franchise && t.franchise !== state.franchise) return false;
+      if (state.scene) {
+        if (state.scene === "__uncategorized__") {
+          if (t.scene) return false;
+        } else if (t.scene !== state.scene) return false;
+      }
+      if (state.timing && t.timing !== state.timing) return false;
+      if (state.smsType && t.smsType !== state.smsType) return false;
+      if (state.activeOnly && t.status !== "使用中") return false;
+      if (kw) {
+        var hay = ((t.templateName || "") + " " + t.body).toLowerCase();
+        if (hay.indexOf(kw) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function sorted(list) {
+    var arr = list.slice();
+    if (state.sort === "send_count_desc") {
+      arr.sort(function (a, b) { return b.sendCount - a.sendCount; });
+    } else if (state.sort === "modified_desc") {
+      arr.sort(function (a, b) { return a.modified < b.modified ? 1 : -1; });
+    }
+    return arr;
+  }
+
+  function bodyExcerpt(text, len) {
+    var oneLine = text.replace(/\n/g, " ／ ");
+    return oneLine.length > len ? oneLine.slice(0, len) + "…" : oneLine;
+  }
+
+  // ----------------------------------------------------------------
+  // 描画
+  // ----------------------------------------------------------------
+  function populateSelect(sel, values, allLabel) {
+    sel.innerHTML = "";
+    var optAll = document.createElement("option");
+    optAll.value = "";
+    optAll.textContent = allLabel;
+    sel.appendChild(optAll);
+    values.forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = v.value;
+      opt.textContent = v.label;
+      sel.appendChild(opt);
+    });
+  }
+
+  function initFilters() {
+    var clients = [];
+    var seen = {};
+    TEMPLATES.forEach(function (t) {
+      if (!seen[t.clientId]) {
+        seen[t.clientId] = true;
+        var label = t.company ? t.company : "クライアントID " + t.clientId;
+        clients.push({ value: String(t.clientId), label: label });
+      }
+    });
+    clients.sort(function (a, b) { return a.label.localeCompare(b.label, "ja"); });
+    populateSelect(document.getElementById("filterClient"), clients, "すべて");
+
+    populateSelect(
+      document.getElementById("filterFranchise"),
+      FRANCHISES.map(function (f) { return { value: f, label: f }; }),
+      "すべて"
+    );
+    populateSelect(
+      document.getElementById("filterScene"),
+      SCENES.map(function (s) { return { value: s, label: s }; }).concat([{ value: "__uncategorized__", label: "未分類" }]),
+      "すべて"
+    );
+    populateSelect(
+      document.getElementById("filterTiming"),
+      TIMINGS.map(function (s) { return { value: s, label: s }; }),
+      "すべて"
+    );
+  }
+
+  function renderSceneChips() {
+    var visible = visibleTemplates();
+    var counts = {};
+    visible.forEach(function (t) {
+      var key = t.scene || "__uncategorized__";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    var wrap = document.getElementById("sceneChips");
+    wrap.innerHTML = "";
+
+    var allChip = document.createElement("div");
+    allChip.className = "tag-chip" + (state.scene === "" ? " active" : "");
+    allChip.innerHTML = "すべて <span class=\"count\">" + visible.length + "</span>";
+    allChip.onclick = function () { state.scene = ""; syncSceneSelect(); render(); };
+    wrap.appendChild(allChip);
+
+    SCENES.forEach(function (scene) {
+      if (!counts[scene]) return;
+      var chip = document.createElement("div");
+      chip.className = "tag-chip" + (state.scene === scene ? " active" : "");
+      chip.innerHTML = esc(scene) + " <span class=\"count\">" + counts[scene] + "</span>";
+      chip.onclick = function () {
+        state.scene = state.scene === scene ? "" : scene;
+        syncSceneSelect();
+        render();
+      };
+      wrap.appendChild(chip);
+    });
+
+    // 未分類は最後に、他と同じ見た目で（隠さない）
+    var uncategorizedCount = counts["__uncategorized__"] || 0;
+    var uncChip = document.createElement("div");
+    uncChip.className = "tag-chip uncategorized" + (state.scene === "__uncategorized__" ? " active" : "");
+    uncChip.innerHTML = "未分類 <span class=\"count\">" + uncategorizedCount + "</span>";
+    uncChip.onclick = function () {
+      state.scene = state.scene === "__uncategorized__" ? "" : "__uncategorized__";
+      syncSceneSelect();
+      render();
+    };
+    wrap.appendChild(uncChip);
+  }
+
+  function syncSceneSelect() {
+    document.getElementById("filterScene").value = state.scene;
+  }
+
+  function cardHtml(t) {
+    var titleClass = t.templateName ? "card-title" : "card-title fallback";
+    var titleText = t.templateName ? t.templateName : bodyExcerpt(t.body, 18) + "（テンプレート名なし）";
+    var companyClass = t.company ? "card-company" : "card-company fallback-id";
+    var companyText = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
+    var statusClass = t.status === "使用中" ? "status-active" : "status-stopped";
+    var tags = [];
+    if (t.scene) tags.push('<span class="mini-tag">' + esc(t.scene) + "</span>");
+    else tags.push('<span class="mini-tag warn">未分類</span>');
+    if (t.timing) tags.push('<span class="mini-tag">' + esc(t.timing) + "</span>");
+    if (t.franchise) tags.push('<span class="mini-tag">' + esc(t.franchise) + "</span>");
+    tags.push('<span class="mini-tag">' + esc(t.smsType) + "</span>");
+    if (t.isTest) tags.push('<span class="mini-tag warn">テスト用</span>');
+
+    return (
+      '<div class="card' + (state.selectedId === t.id ? " selected" : "") + '" data-id="' + t.id + '">' +
+      '<div class="card-top">' +
+      '<div>' +
+      '<p class="' + titleClass + '">' + esc(titleText) + "</p>" +
+      '<p class="' + companyClass + '">' + companyText + "</p>" +
+      "</div>" +
+      '<div class="card-stats">' +
+      '<div class="send-count">' + t.sendCount.toLocaleString() + "通</div>" +
+      '<span class="status-pill ' + statusClass + '">' + esc(t.status) + "</span>" +
+      "</div>" +
+      "</div>" +
+      '<div class="card-tags">' + tags.join("") + "</div>" +
+      '<div class="card-body-excerpt">' + renderBody(bodyExcerpt(t.body, 70), state.masked) + "</div>" +
+      '<div class="card-actions">' +
+      '<button class="btn detail-btn" data-id="' + t.id + '">詳細</button>' +
+      '<button class="btn copy-btn" data-id="' + t.id + '">コピー</button>' +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  function render() {
+    document.getElementById("keyword").value = state.keyword;
+    document.getElementById("filterClient").value = state.client;
+    document.getElementById("filterFranchise").value = state.franchise;
+    document.getElementById("filterTiming").value = state.timing;
+    document.getElementById("filterType").value = state.smsType;
+    document.getElementById("filterActiveOnly").checked = state.activeOnly;
+    document.getElementById("filterIncludeTest").checked = state.includeTest;
+    document.getElementById("filterIncludePlatelike").checked = state.includePlatelike;
+    document.getElementById("sortOrder").value = state.sort;
+    syncSceneSelect();
+
+    renderSceneChips();
+
+    var list = sorted(filtered());
+    var total = visibleTemplates().length;
+
+    document.getElementById("resultMeta").textContent =
+      list.length + " 件表示中（除外設定を反映した母数 " + total + " 件中）";
+
+    var listEl = document.getElementById("cardList");
+    var emptyEl = document.getElementById("emptyState");
+    if (list.length === 0) {
+      listEl.innerHTML = "";
+      emptyEl.style.display = "block";
+    } else {
+      emptyEl.style.display = "none";
+      listEl.innerHTML = list.map(cardHtml).join("");
+    }
+
+    if (state.selectedId != null) {
+      var still = TEMPLATES.some(function (t) { return t.id === state.selectedId; });
+      if (still) renderDetail(state.selectedId);
+    }
+  }
+
+  function renderDetail(id) {
+    var t = TEMPLATES.filter(function (x) { return x.id === id; })[0];
+    if (!t) return;
+    var overlay = document.getElementById("detailOverlay");
+    var title = t.templateName ? esc(t.templateName) : "（テンプレート名なし）";
+    var company = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
+
+    var settingsRows = [
+      ["差込む電話番号", t.reservedTel ? (state.masked ? "●●●-●●●●-●●●●" : esc(t.reservedTel)) : "—"],
+      ["差込むURL", t.reservedUrl ? (state.masked ? "https://●●●●●●●●●●" : esc(t.reservedUrl)) : "—"],
+      ["入庫予約用URL", t.nykReservedUrl ? (state.masked ? "https://●●●●●●●●●●" : esc(t.nykReservedUrl)) : "—"],
+      ["配信の種類", esc(t.deliveryType)],
+      ["予約済みを除く", t.excludeReserved ? "はい" : "いいえ"],
+      ["コールリスト登録者のみ", t.callListOnly ? "はい" : "いいえ"],
+      ["SMSの型", esc(t.smsType)],
+      ["フランチャイズ", t.franchise ? esc(t.franchise) : "—"],
+      ["利用シーン", t.scene ? esc(t.scene) : "未分類"]
+    ];
+
+    overlay.innerHTML =
+      '<div class="detail-header">' +
+      "<div>" +
+      "<h3>" + title + "</h3>" +
+      '<div class="card-company">' + company + "</div>" +
+      "</div>" +
+      '<button class="close-btn" id="closeDetail">&times;</button>' +
+      "</div>" +
+      '<div class="detail-body">' +
+      '<div class="detail-section">' +
+      "<h4>本文</h4>" +
+      '<div class="full-body-text">' + renderBody(t.body, state.masked) + "</div>" +
+      '<button class="btn primary" id="copyFullBtn" style="margin-top:8px;">本文をコピー</button>' +
+      "</div>" +
+      '<div class="detail-section">' +
+      "<h4>設定内容</h4>" +
+      '<table class="kv-table">' +
+      settingsRows.map(function (r) {
+        return "<tr><td class=\"k\">" + esc(r[0]) + "</td><td>" + r[1] + "</td></tr>";
+      }).join("") +
+      "</table>" +
+      "</div>" +
+      '<div class="detail-section">' +
+      "<h4>実績・履歴</h4>" +
+      '<table class="kv-table">' +
+      "<tr><td class=\"k\">送信通数</td><td>" + t.sendCount.toLocaleString() + " 通</td></tr>" +
+      "<tr><td class=\"k\">状態</td><td>" + esc(t.status) + "</td></tr>" +
+      "<tr><td class=\"k\">作成者</td><td>" + esc(t.createdBy) + "</td></tr>" +
+      "<tr><td class=\"k\">最終更新者</td><td>" + esc(t.modifiedBy) + "</td></tr>" +
+      "<tr><td class=\"k\">作成日</td><td>" + esc(t.created) + "</td></tr>" +
+      "<tr><td class=\"k\">最終更新日</td><td>" + esc(t.modified) + "</td></tr>" +
+      "</table>" +
+      "</div>" +
+      "</div>";
+
+    document.getElementById("closeDetail").onclick = closeDetail;
+    document.getElementById("copyFullBtn").onclick = function () {
+      copyToClipboard(t.body);
+    };
+
+    overlay.classList.add("open");
+    document.getElementById("overlayBackdrop").classList.add("show");
+  }
+
+  function closeDetail() {
+    state.selectedId = null;
+    document.getElementById("detailOverlay").classList.remove("open");
+    document.getElementById("overlayBackdrop").classList.remove("show");
+    render();
+  }
+
+  function copyToClipboard(text) {
+    var toast = document.getElementById("copyToast");
+    function showToast() {
+      toast.classList.add("show");
+      setTimeout(function () { toast.classList.remove("show"); }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showToast, showToast);
+    } else {
+      showToast();
+    }
+  }
+
+  function setUpdatedAt() {
+    var now = new Date();
+    var pad = function (n) { return String(n).padStart(2, "0"); };
+    var text =
+      now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
+      " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + " 時点のダミーデータ表示";
+    document.getElementById("updatedAt").textContent = "最終更新: " + text;
+  }
+
+  // ----------------------------------------------------------------
+  // イベント
+  // ----------------------------------------------------------------
+  function bindEvents() {
+    document.getElementById("keyword").addEventListener("input", function (e) {
+      state.keyword = e.target.value;
+      render();
+    });
+    document.getElementById("filterClient").addEventListener("change", function (e) {
+      state.client = e.target.value;
+      render();
+    });
+    document.getElementById("filterFranchise").addEventListener("change", function (e) {
+      state.franchise = e.target.value;
+      render();
+    });
+    document.getElementById("filterScene").addEventListener("change", function (e) {
+      state.scene = e.target.value;
+      render();
+    });
+    document.getElementById("filterTiming").addEventListener("change", function (e) {
+      state.timing = e.target.value;
+      render();
+    });
+    document.getElementById("filterType").addEventListener("change", function (e) {
+      state.smsType = e.target.value;
+      render();
+    });
+    document.getElementById("filterActiveOnly").addEventListener("change", function (e) {
+      state.activeOnly = e.target.checked;
+      render();
+    });
+    document.getElementById("filterIncludeTest").addEventListener("change", function (e) {
+      state.includeTest = e.target.checked;
+      render();
+    });
+    document.getElementById("filterIncludePlatelike").addEventListener("change", function (e) {
+      state.includePlatelike = e.target.checked;
+      render();
+    });
+    document.getElementById("sortOrder").addEventListener("change", function (e) {
+      state.sort = e.target.value;
+      render();
+    });
+    document.getElementById("maskToggle").addEventListener("change", function (e) {
+      state.masked = e.target.checked;
+      render();
+    });
+    document.getElementById("resetFilters").addEventListener("click", function () {
+      state.keyword = "";
+      state.client = "";
+      state.franchise = "";
+      state.scene = "";
+      state.timing = "";
+      state.smsType = "";
+      state.activeOnly = false;
+      state.includeTest = false;
+      state.includePlatelike = false;
+      render();
+    });
+    document.getElementById("overlayBackdrop").addEventListener("click", closeDetail);
+
+    document.getElementById("cardList").addEventListener("click", function (e) {
+      var detailBtn = e.target.closest(".detail-btn");
+      var copyBtn = e.target.closest(".copy-btn");
+      var card = e.target.closest(".card");
+      if (!card) return;
+      var id = Number(card.getAttribute("data-id"));
+      if (copyBtn) {
+        var t = TEMPLATES.filter(function (x) { return x.id === id; })[0];
+        if (t) copyToClipboard(t.body);
+        return;
+      }
+      // 詳細ボタン、またはカード本体クリックで詳細を開く
+      state.selectedId = id;
+      render();
+      renderDetail(id);
+    });
+  }
+
+  // ----------------------------------------------------------------
+  // 初期化
+  // ----------------------------------------------------------------
+  initFilters();
+  bindEvents();
+  setUpdatedAt();
+  render();
+})();
+</script>
+</body>
+</html>
