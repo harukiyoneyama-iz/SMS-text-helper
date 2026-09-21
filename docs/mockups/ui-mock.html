@@ -557,7 +557,42 @@
   }
   .tray-item-name { font-weight: bold; }
   .tray-item-meta { color: var(--text-sub); font-size: 11.5px; }
-  .tray-item-actions { display: flex; gap: 6px; margin-top: 4px; }
+  .tray-item-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .tray-item-body {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-top: 6px;
+    white-space: pre-wrap;
+    max-height: 88px;
+    overflow-y: auto;
+  }
+  .tray-remove {
+    background: none;
+    border: none;
+    color: var(--text-sub);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  .tray-remove:hover { color: var(--warn-text); }
+
+  .draft-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .draft-toolbar-hint {
+    font-size: 11px;
+    color: var(--text-sub);
+  }
 
   .type-mismatch-warn {
     background: var(--warn-bg);
@@ -856,7 +891,11 @@
         <h3>文章案</h3>
         <div id="replaceVarRow" class="replace-var-row" style="display:none;"></div>
         <div id="draftMaskWarn"></div>
-        <textarea class="draft-textarea" id="draftTextarea" placeholder="左の文例の「文章案に入れる」を押すか、直接入力してください"></textarea>
+        <textarea class="draft-textarea" id="draftTextarea" placeholder="左の文例の「この本文を貼り付け」を押すか、直接入力してください"></textarea>
+        <div class="draft-toolbar">
+          <button class="btn" id="undoDraftBtn" disabled>↩ 元に戻す</button>
+          <span class="draft-toolbar-hint">貼り付けは Ctrl+Z でも戻せます</span>
+        </div>
         <div class="counter-row">
           <span class="counter-main" id="counterMain"></span>
         </div>
@@ -1482,8 +1521,8 @@
     selectedId: null,
     step: "search",
     tray: [],
-    insertedIds: [],
     draftText: "",
+    draftUndo: null, // 「元に戻す」用に、ボタン操作の直前の下書きを1つだけ保持する
     draftSmsType: "text",
     requestCopied: false,
     reqWorkType: "追加",
@@ -1844,41 +1883,86 @@
 
   function removeFromTray(id) {
     state.tray = state.tray.filter(function (x) { return x !== id; });
-    state.insertedIds = state.insertedIds.filter(function (x) { return x !== id; });
     render();
   }
 
   // ----------------------------------------------------------------
   // ② 文章案をつくる
   // ----------------------------------------------------------------
-  function insertBodyIntoDraft(id) {
-    if (state.insertedIds.indexOf(id) !== -1) return; // 重複挿入を防ぐ（A4）
+  // 文章案への貼り付けは「コピペ」そのものとして扱う。
+  // 「どれを貼ったか」という状態は持たない（下書きは自由に編集できるので、
+  // 記録を持つと押した瞬間からズレて嘘になる）。戻すのは Ctrl+Z と
+  // 「元に戻す」ボタンの2経路で担保する。
+  // execCommand("insertText") は input イベントを発火させる。
+  // その input ハンドラが「手入力があった」と誤認してスナップショットを
+  // 捨ててしまうので、ボタン操作中であることを知らせるフラグで区別する。
+  var isProgrammaticEdit = false;
+
+  // separateLine: 本文のような「かたまり」を貼るときは true（直前に改行を入れる）。
+  //               置換変数のような短い語を差し込むときは false（文の途中に入るため）。
+  function pasteIntoDraft(text, separateLine) {
+    var ta = document.getElementById("draftTextarea");
+    state.draftUndo = state.draftText; // 「元に戻す」用のスナップショット（1段）
+    isProgrammaticEdit = true;
+
+    var hadFocus = document.activeElement === ta;
+    ta.focus();
+    if (!hadFocus) {
+      // 一度も触っていない場合は末尾に足す（先頭に入ると驚くため）
+      ta.selectionStart = ta.selectionEnd = ta.value.length;
+    }
+    var insertPos = ta.selectionStart;
+    var needsNewline = separateLine && insertPos > 0 && ta.value.charAt(insertPos - 1) !== "\n";
+    var payload = (needsNewline ? "\n" : "") + text;
+
+    // execCommand が使えると、ブラウザ標準の取り消し履歴に乗るので Ctrl+Z が効く
+    var ok = false;
+    try {
+      ok = document.execCommand("insertText", false, payload);
+    } catch (e) {
+      ok = false;
+    }
+    if (!ok) {
+      var end = ta.selectionEnd;
+      ta.value = ta.value.slice(0, insertPos) + payload + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = insertPos + payload.length;
+    }
+
+    isProgrammaticEdit = false;
+    state.draftText = ta.value;
+    renderDraftPanel();
+    renderStepNav();
+  }
+
+  function pasteBodyIntoDraft(id) {
     var t = TEMPLATES.filter(function (x) { return x.id === id; })[0];
     if (!t) return;
-    if (state.draftText && !state.draftText.endsWith("\n")) {
-      state.draftText += "\n" + t.body;
-    } else {
-      state.draftText += t.body;
-    }
-    state.insertedIds.push(id);
+    pasteIntoDraft(t.body, true);
+    showToast("文章案に貼り付けました（Ctrl+Z か「元に戻す」で取り消せます）");
+  }
+
+  function undoDraft() {
+    if (state.draftUndo === null) return;
+    state.draftText = state.draftUndo;
+    state.draftUndo = null;
     document.getElementById("draftTextarea").value = state.draftText;
     renderDraftPanel();
+    renderStepNav();
   }
 
   function trayItemHtml(t) {
     var nameHtml = renderTitleWithFallback(t, 16, "（名称なし）");
     var company = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
-    var inserted = state.insertedIds.indexOf(t.id) !== -1;
     return (
       '<div class="tray-item" data-id="' + t.id + '">' +
       '<div class="tray-item-top">' +
       '<span class="tray-item-name">' + nameHtml + "</span>" +
-      '<span class="tray-item-meta">' + t.sendCount.toLocaleString() + "通</span>" +
+      '<button class="tray-remove remove-tray-btn" data-id="' + t.id + '" title="選択から外す">×</button>' +
       "</div>" +
-      '<div class="tray-item-meta">' + company + "</div>" +
+      '<div class="tray-item-meta">' + company + " ／ " + t.sendCount.toLocaleString() + "通</div>" +
+      '<div class="tray-item-body">' + renderBody(t.body, state.masked) + "</div>" +
       '<div class="tray-item-actions">' +
-      '<button class="btn insert-body-btn" data-id="' + t.id + '"' + (inserted ? " disabled" : "") + '>' + (inserted ? "入れた ✓" : "文章案に入れる") + '</button>' +
-      '<button class="btn remove-tray-btn" data-id="' + t.id + '">選択を解除</button>' +
+      '<button class="btn primary paste-body-btn" data-id="' + t.id + '">この本文を貼り付け</button>' +
       "</div>" +
       "</div>"
     );
@@ -1939,6 +2023,8 @@
 
     var ta = document.getElementById("draftTextarea");
     if (ta.value !== state.draftText) ta.value = state.draftText;
+
+    document.getElementById("undoDraftBtn").disabled = state.draftUndo === null;
 
     renderCounter();
   }
@@ -2152,17 +2238,21 @@
     render();
   }
 
-  function copyToClipboard(text, message) {
+  function showToast(message) {
     var toast = document.getElementById("copyToast");
-    toast.textContent = message || "コピーしました";
-    function showToast() {
-      toast.classList.add("show");
-      setTimeout(function () { toast.classList.remove("show"); }, 1800);
-    }
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(function () { toast.classList.remove("show"); }, 1800);
+  }
+
+  function copyToClipboard(text, message) {
+    var msg = message || "コピーしました";
+    function done() { showToast(msg); }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(showToast, showToast);
+      navigator.clipboard.writeText(text).then(done, done);
     } else {
-      showToast();
+      done();
     }
   }
 
@@ -2285,26 +2375,29 @@
     });
     document.getElementById("draftTextarea").addEventListener("input", function (e) {
       state.draftText = e.target.value;
+      if (!isProgrammaticEdit) {
+        // 手で編集した時点で「元に戻す」の対象は無くなる。
+        // （貼り付け直前まで巻き戻すと、その後の手入力まで消えてしまうため）
+        state.draftUndo = null;
+        document.getElementById("undoDraftBtn").disabled = true;
+      }
       renderCounter();
       renderStepNav();
     });
     document.getElementById("trayList").addEventListener("click", function (e) {
-      var insertBtn = e.target.closest(".insert-body-btn");
+      var pasteBtn = e.target.closest(".paste-body-btn");
       var removeBtn = e.target.closest(".remove-tray-btn");
-      if (insertBtn && !insertBtn.disabled) {
-        insertBodyIntoDraft(Number(insertBtn.getAttribute("data-id")));
+      if (pasteBtn) {
+        pasteBodyIntoDraft(Number(pasteBtn.getAttribute("data-id")));
       } else if (removeBtn) {
         removeFromTray(Number(removeBtn.getAttribute("data-id")));
       }
     });
+    document.getElementById("undoDraftBtn").addEventListener("click", undoDraft);
     document.getElementById("replaceVarRow").addEventListener("click", function (e) {
       var btn = e.target.closest(".replace-var-btn");
       if (!btn) return;
-      var ta = document.getElementById("draftTextarea");
-      state.draftText += btn.getAttribute("data-token");
-      ta.value = state.draftText;
-      renderCounter();
-      renderStepNav();
+      pasteIntoDraft(btn.getAttribute("data-token"));
     });
 
     // ③ 依頼文を出す
