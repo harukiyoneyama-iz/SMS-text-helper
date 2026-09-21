@@ -28,6 +28,8 @@ updated: 2026-09-21
 | Phase 1（個人利用） | L3セキュリティトリアージ・エンジニア相談 | done | | |
 | Phase 1（個人利用） | 依存ライブラリの確定（package.json / pnpm-lock.yaml） | done | | 2 |
 | Phase 1（個人利用） | 画面モックアップ作成（ui-mock.html） | done | | 4 |
+| Phase 1（個人利用） | 実文例調査（sms-corpus.md）の取り込み・モックへの合流 | done | | 3 |
+| Phase 1（個人利用） | 満期月の差し込み化・アプローチ段階のたたき台生成（1行差し替え） | todo | | |
 | Phase 1（個人利用） | 営業メンバーへのモックアップ共有・フィードバック収集 | todo | | |
 | Phase 1（個人利用） | BigQuery接続情報の受領（内田さん待ち） | blocked (内田さん返信待ち) | | |
 | Phase 1（個人利用） | Next.jsアプリ実装（検索・一覧・詳細・伏せモード） | todo | | |

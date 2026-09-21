@@ -27,6 +27,15 @@ Claude に読ませたい資料（PDF・Excel・画像・メモなど）は、�
 2. ファイルを入れたら、Claude にこう頼む:
    「materials の 見積もり.xlsx を読んで要約して」
 
+## corpus-dataset.js について
+
+`corpus-dataset.js` は `sms-corpus.md`（実文例集）を `docs/mockups/ui-mock.html` が読み込める
+JavaScript の形に変換したものです。このファイルをここに置くと、モックが実文例と実データの汚れ
+（テンプレート名空欄・個人宛の下書き・店舗違いの複製・過去版など）を表示するようになります。
+無ければ架空のダミーデータで動くので、必須ではありません。
+
+作り方・スキーマは `docs/DEVELOPMENT_PLAN.md`「実文例調査（sms-corpus.md）との突合結果」を参照してください。
+
 ## このフォルダの性質
 
 - ここに置いたファイルは **git 管理外**です（コミットしても GitHub に上がらない設定済み）。

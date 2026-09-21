@@ -156,6 +156,33 @@
   }
   .mask-banner.show { display: block; }
 
+  /* 実データ表示中の帯（materials/corpus-dataset.js を読み込んだ場合のみ表示） */
+  .real-data-banner {
+    display: none;
+    background: #742a2a;
+    color: #fed7d7;
+    font-size: 12.5px;
+    padding: 8px 20px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .real-data-banner.show { display: block; }
+  .dummy-data-note {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-left: 6px;
+  }
+
+  .filter-section-label {
+    font-size: 11px;
+    color: var(--text-sub);
+    font-weight: bold;
+    margin: 14px 0 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .filter-section-label:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+
   main {
     display: flex;
     max-width: 1400px;
@@ -378,6 +405,59 @@
     background: var(--warn-bg);
     color: var(--warn-text);
     border: 1px solid var(--warn-border);
+  }
+  .mini-tag.retired {
+    background: #edf2f7;
+    color: #718096;
+    text-decoration: line-through;
+  }
+  .mini-tag.personal {
+    background: #fffaf0;
+    color: #9c4221;
+    border: 1px solid #fbd38d;
+  }
+  .store-variant-badge {
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 6px;
+  }
+  .store-variant-table {
+    margin-top: 8px;
+    font-size: 11.5px;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  .store-variant-table th, .store-variant-table td {
+    border: 1px solid var(--border);
+    padding: 3px 6px;
+    text-align: left;
+  }
+  .store-variant-table th { background: var(--bg); color: var(--text-sub); }
+  .tag-chip.zero {
+    opacity: .55;
+  }
+  .revision-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+  .revision-box .rev-body {
+    white-space: pre-wrap;
+    color: var(--text-sub);
+    margin-top: 4px;
+  }
+  .char-count-sub {
+    font-size: 11.5px;
+    color: var(--text-sub);
+    margin-top: 2px;
   }
   .card-actions {
     display: flex;
@@ -771,7 +851,7 @@
   <div class="header-row">
     <div class="header-title">
       <h1>SMS文例検索ツール</h1>
-      <span class="badge-mock">画面モックアップ（ダミーデータ）</span>
+      <span class="badge-mock" id="dataModeBadge">画面モックアップ（ダミーデータ）</span>
     </div>
     <div class="mask-toggle-wrap">
       <span class="updated-at" id="updatedAt"></span>
@@ -798,6 +878,9 @@
   </div>
 </header>
 
+<div class="real-data-banner" id="realDataBanner">
+  ⚠ 実データ表示中（materials/corpus-dataset.js を読み込みました）。実在のクライアント名・店舗名・電話番号を含みます。社外共有・画面共有には十分ご注意ください。
+</div>
 <div class="mask-banner" id="maskBanner">
   🔒 伏せモード中：会社名・店舗名・電話番号・URLを伏せています。「② 文章案をつくる」の編集欄は自分で直せなくなるため伏せられません。
 </div>
@@ -827,12 +910,31 @@
         <option value="">すべて</option>
         <option value="入庫連動">入庫連動</option>
         <option value="テキスト">テキスト</option>
+        <option value="リマインド">リマインド</option>
       </select>
     </div>
+    <div class="filter-group">
+      <label class="field-label">顧客区分</label>
+      <select id="filterCustomerType"></select>
+    </div>
+    <div class="filter-group">
+      <label class="field-label">アプローチ段階</label>
+      <select id="filterStage"></select>
+    </div>
+
+    <div class="filter-section-label">表示に含める</div>
     <div class="filter-group">
       <div class="checkbox-row">
         <input type="checkbox" id="filterActiveOnly">
         <label for="filterActiveOnly">使用中の文例だけ表示する</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="filterIncludeRetired">
+        <label for="filterIncludeRetired">過去の文面（【使用不可】）も表示する</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="filterIncludePersonal">
+        <label for="filterIncludePersonal">個人宛の文例も表示する</label>
       </div>
       <div class="checkbox-row">
         <input type="checkbox" id="filterIncludeTest">
@@ -843,6 +945,15 @@
         <label for="filterIncludePlatelike">車のナンバーが書かれた文例も表示する</label>
       </div>
     </div>
+
+    <div class="filter-section-label">表示のまとめ方</div>
+    <div class="filter-group">
+      <div class="checkbox-row">
+        <input type="checkbox" id="filterConsolidateStores" checked>
+        <label for="filterConsolidateStores">店舗違いをまとめる</label>
+      </div>
+    </div>
+
     <button class="btn" id="resetFilters" style="width:100%;">絞り込みをリセット</button>
   </aside>
 
@@ -900,6 +1011,7 @@
           <span class="counter-main" id="counterMain"></span>
         </div>
         <div class="counter-detail" id="counterDetail"></div>
+        <div class="char-count-sub" id="counterInsertTagNote" style="display:none;"></div>
         <div id="counterWarn"></div>
         <div class="provisional-note">※ 文字数・通数・料金は申請書「【配信文章設定】…」の数式をそのまま再現した表示です。長文対応リリース後の仕様変更で数値が変わる可能性があります。</div>
         <div class="step-forward-row">
@@ -985,6 +1097,12 @@
   <button class="btn primary" id="toDraftBtn">文章案をつくる →</button>
 </div>
 
+<!--
+  実データファイル（materials/sms-corpus.md を変換したもの）が同じプロジェクトの
+  materials/ フォルダに置いてあれば読み込む。無ければ黙って無視され、下のダミーデータで動く
+  （materials/ は git 管理外のため、clone 直後はこのファイルは存在しない）。
+-->
+<script src="../../materials/corpus-dataset.js"></script>
 <script>
 (function () {
   "use strict";
@@ -998,7 +1116,8 @@
   // 「〇〇様」始まりは、実データでビュー側が氏名を伏せた跡（全体の
   // 約4.6%）を再現する目的で id7 / id14 の2件だけに絞っている。
   // ----------------------------------------------------------------
-  var TEMPLATES = [
+  // corpusId を持たないダミー行にも id を軸にした一意キーを振っておく（統一的に扱うため）
+  var DUMMY_TEMPLATES = [
     {
       id: 1, templateName: "車検5ヶ月前案内", company: "株式会社サンライズオート", clientId: 1001,
       franchise: "車検のコバック", scene: "車検誘致", timing: "5ヶ月前", smsType: "テキスト",
@@ -1085,7 +1204,7 @@
       deliveryType: "定型", excludeReserved: false, callListOnly: false,
       createdBy: "u_sunrise_okayama", modifiedBy: "u_sunrise_okayama",
       created: "2025-11-20", modified: "2026-01-08",
-      isTest: false, hasPlatelike: false
+      isTest: false, hasPlatelike: false, revisionOf: 41
     },
     {
       id: 9, templateName: "コーティング新登場", company: "広島オートパーツ株式会社", clientId: 774,
@@ -1398,15 +1517,149 @@
       createdBy: "u_sunrise_okayama", modifiedBy: "u_sunrise_okayama",
       created: "2026-02-27", modified: "2026-08-05",
       isTest: false, hasPlatelike: false
+    },
+    // --- 追加分（実データ調査 materials/sms-corpus.md の傾向を再現するダミー） ---
+    {
+      id: 37, templateName: "田中様", company: "株式会社サンライズオート", clientId: 1001,
+      franchise: "", scene: "", timing: "", smsType: "テキスト",
+      status: "使用中", sendCount: 1,
+      body: "田中様　お待たせいたしました、部品が入荷しましたのでご連絡いたします。ご都合の良い日にお立ち寄りください。086-000-1111",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sunrise_okayama", modifiedBy: "u_sunrise_okayama",
+      created: "2026-05-02", modified: "2026-05-02",
+      isTest: false, hasPlatelike: false, isPersonal: true
+    },
+    {
+      id: 38, templateName: "佐藤様", company: "松山モーターサービス株式会社", clientId: 587,
+      franchise: "", scene: "", timing: "", smsType: "テキスト",
+      status: "使用中", sendCount: 1,
+      body: "佐藤様　本日9時にお伺いする予定でしたが道路混雑のため10分ほど遅れます。申し訳ございません。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_matsuyama_motor", modifiedBy: "u_matsuyama_motor",
+      created: "2026-06-19", modified: "2026-06-19",
+      isTest: false, hasPlatelike: false, isPersonal: true
+    },
+    {
+      id: 39, templateName: "見積提示_鈴木様", company: "仙台カーライフ株式会社", clientId: 1042,
+      franchise: "", scene: "", timing: "", smsType: "テキスト",
+      status: "使用中", sendCount: 1,
+      body: "鈴木様　お車の見積もりができましたのでご連絡です。2026年8月3日 14時頃にお電話させていただきます。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sendai_carlife", modifiedBy: "u_sendai_carlife",
+      created: "2026-08-01", modified: "2026-08-01",
+      isTest: false, hasPlatelike: false, isPersonal: true
+    },
+    // --- 過去版（【使用不可】＝現役を退いた文面。除外ではなく現役/過去の状態区分） ---
+    {
+      id: 40, templateName: "【使用不可】車検5ヶ月前案内（旧割引額）", company: "株式会社サンライズオート", clientId: 1001,
+      franchise: "車検のコバック", scene: "車検誘致", timing: "5ヶ月前", smsType: "テキスト",
+      status: "停止", sendCount: 31200,
+      body: "車検のコバック岡山円山店です。お車の車検満了まで残り5ヶ月となりました。早期割引3,000円をご用意しております。ご予約はお電話（086-000-1111）まで。",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: true, callListOnly: false,
+      createdBy: "u_sunrise_okayama", modifiedBy: "u_sunrise_okayama",
+      created: "2025-04-10", modified: "2025-10-30",
+      isTest: false, hasPlatelike: false, lifecycle: "retired", revisionOf: null
+    },
+    {
+      id: 41, templateName: "【使用不可】タイヤ交換キャンペーン（旧文言）", company: "株式会社サンライズオート", clientId: 1001,
+      franchise: "車検のコバック", scene: "タイヤ", timing: "", smsType: "テキスト",
+      status: "停止", sendCount: 4210,
+      body: "車検のコバック岡山円山店です。タイヤ交換ご相談ください（086-000-1111）。",
+      reservedTel: "086-000-1111", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: false,
+      createdBy: "u_sunrise_okayama", modifiedBy: "u_sunrise_okayama",
+      created: "2025-08-01", modified: "2025-11-15",
+      isTest: false, hasPlatelike: false, lifecycle: "retired", revisionOf: null
+    },
+    // --- 店舗違いの複製（同一文面・店舗名/電話番号だけ差し替え） ---
+    {
+      id: 42, templateName: "車検1ヶ月前・最終案内", company: "株式会社サンライズオート", clientId: 1001,
+      franchise: "車検のコバック", scene: "車検誘致", timing: "1ヶ月前", smsType: "テキスト",
+      status: "使用中", sendCount: 8640,
+      body: "車検のコバック倉敷店です。車検満了まで残り1ヶ月です。お早めにご連絡ください（086-000-2222）。",
+      reservedTel: "086-000-2222", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: true, callListOnly: false,
+      createdBy: "u_sunrise_okayama", modifiedBy: "u_sunrise_okayama",
+      created: "2025-10-11", modified: "2026-08-30",
+      isTest: false, hasPlatelike: false,
+      storeVariants: [{ storeName: "総社店", tel: "086-000-3333" }]
+    },
+    // --- リマインド（既存ダミーには無かった型） ---
+    {
+      id: 43, templateName: "車検予約リマインド（70文字版）", company: "株式会社サンライズオート", clientId: 1001,
+      franchise: "車検のコバック", scene: "予約リマインド", timing: "", smsType: "リマインド",
+      status: "使用中", sendCount: 6210,
+      body: "車検のコバック岡山円山店です 車検のご予約は@visit_date@です 変更はこちら　@reserve_change_url@",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: true,
+      createdBy: "u_sunrise_okayama", modifiedBy: "u_sunrise_okayama",
+      created: "2026-01-20", modified: "2026-06-01",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 44, templateName: "車検前日リマインド（持ち物つき）", company: "仙台カーライフ株式会社", clientId: 1042,
+      franchise: "ホリデー車検", scene: "車検証準備", timing: "前日", smsType: "リマインド",
+      status: "使用中", sendCount: 3980,
+      body: "ホリデー車検仙台店です。\nいつもご利用ありがとうございます。\n\n車検のご予約日前日となりました。\n\n▼当日の持ち物\n・車検証\n・自賠責\n・納税証明書\n・任意保険証\n\n明日はお気をつけてお越しくださいませ。",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: true,
+      createdBy: "u_sendai_carlife", modifiedBy: "u_sendai_carlife",
+      created: "2026-02-10", modified: "2026-07-19",
+      isTest: false, hasPlatelike: false
+    },
+    {
+      id: 45, templateName: "点検予約リマインド", company: "青森セントラル石油株式会社", clientId: 933,
+      franchise: "", scene: "予約リマインド", timing: "", smsType: "リマインド",
+      status: "使用中", sendCount: 2140,
+      body: "青森中央SSです 点検のご予約は@visit_date@です 変更はこちら　@reserve_change_url@",
+      reservedTel: "", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "定型", excludeReserved: false, callListOnly: true,
+      createdBy: "u_aomori_central", modifiedBy: "u_aomori_central",
+      created: "2026-03-15", modified: "2026-05-20",
+      isTest: false, hasPlatelike: false
+    },
+    // --- 満期月の直書き（次回の価値訴求＝差し込み化の下地） ---
+    {
+      id: 46, templateName: "6・7月満期の方へ", company: "松山モーターサービス株式会社", clientId: 587,
+      franchise: "車検の速太郎", scene: "車検誘致", timing: "7ヶ月前", smsType: "入庫連動",
+      status: "使用中", sendCount: 4870,
+      body: "車検の速太郎松山店です。6・7月満期の方へお得な車検のご案内です。お電話でのお申込は089-000-2222、WEB予約はこちらから。",
+      reservedTel: "089-000-2222", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: false, callListOnly: false,
+      createdBy: "u_matsuyama_motor", modifiedBy: "u_matsuyama_motor",
+      created: "2026-04-01", modified: "2026-04-01",
+      isTest: false, hasPlatelike: false, revisionOf: 47
+    },
+    {
+      id: 47, templateName: "【使用不可】5・6月満期の方へ", company: "松山モーターサービス株式会社", clientId: 587,
+      franchise: "車検の速太郎", scene: "車検誘致", timing: "7ヶ月前", smsType: "入庫連動",
+      status: "停止", sendCount: 4510,
+      body: "車検の速太郎松山店です。5・6月満期の方へお得な車検のご案内です。お電話でのお申込は089-000-2222、WEB予約はこちらから。",
+      reservedTel: "089-000-2222", reservedUrl: "", nykReservedUrl: "",
+      deliveryType: "満了前", excludeReserved: false, callListOnly: false,
+      createdBy: "u_matsuyama_motor", modifiedBy: "u_matsuyama_motor",
+      created: "2026-03-01", modified: "2026-03-31",
+      isTest: false, hasPlatelike: false, lifecycle: "retired", revisionOf: null
     }
   ];
+  // ダミーデータ側の revisionOf は各テンプレートの id フィールドに直接書く（46 → 47 の後継、
+  // 8 → 41 の後継。id:8「タイヤ交換キャンペーン」・id:46「6・7月満期の方へ」自体の定義を参照）。
 
   var SCENES = [
     "車検誘致", "車検お礼", "車検証準備", "12ヶ月点検", "6ヶ月点検", "18ヶ月点検", "3ヶ月点検",
     "オイル交換", "タイヤ", "コーティング", "車販・乗り換え", "キャンペーン・セール",
-    "長期休暇案内", "LINE・アプリ誘導", "予約リマインド"
+    "長期休暇案内", "LINE・アプリ誘導", "予約リマインド", "お知らせ"
   ];
-  var TIMINGS = ["1ヶ月前", "2ヶ月前", "5ヶ月前", "満了後1ヶ月"];
+  var TIMINGS = [
+    "前日", "当月", "1ヶ月前", "2ヶ月前", "3ヶ月前", "4ヶ月前", "5ヶ月前", "7ヶ月前",
+    "満了後1ヶ月", "車検後3ヶ月"
+  ];
+  var CUSTOMER_TYPES = ["コバックリピート", "販売リピート", "コバック新規", "販売新規", "パック", "リース", "マイカーリース"];
+  var APPROACH_STAGES = ["未予約", "仮予約済み", "WEB見積1巡後", "WEB見積3巡後", "2TEL3巡後"];
 
   // フランチャイズは車検系／車販系の2軸（運営企業＝会社名とは別軸）
   var FRANCHISE_GROUPS = [
@@ -1434,6 +1687,96 @@
   ];
   var PHONE_REGEX = /0\d{1,4}-\d{2,4}-\d{4}/g;
   var URL_REGEX = /https?:\/\/[^\s]+/g;
+
+  // ----------------------------------------------------------------
+  // データソースの切り替え（実データ / ダミーデータ）
+  // ----------------------------------------------------------------
+  // materials/corpus-dataset.js（git管理外）が読み込めていれば実データを使う。
+  // 読み込めなければ黙って落ちるのではなく、画面上で「ダミー表示中」と分かるようにする。
+  var USING_REAL_DATA = !!(window.SMS_CORPUS_DATASET && window.SMS_CORPUS_DATASET.templates && window.SMS_CORPUS_DATASET.templates.length);
+  var CORPUS_DATASET = USING_REAL_DATA ? window.SMS_CORPUS_DATASET : null;
+
+  // 【使用不可】※使用しない は名前の接頭・接尾から機械的に判定する（除外ではなく状態区分）
+  function detectLifecycle(name) {
+    if (!name) return "current";
+    if (/^【使用不可】/.test(name) || /^※使用しない/.test(name) || /【使用不可】$/.test(name) || /※使用しない$/.test(name)) {
+      return "retired";
+    }
+    return "current";
+  }
+
+  // テンプレート名が「○○様」のような人名一語だけの場合、個人宛の下書きとみなす
+  function detectPersonal(name) {
+    if (!name) return false;
+    return /^[一-龥ぁ-んァ-ヶA-Za-z]{1,6}様$/.test(name.trim());
+  }
+
+  // ダミー／実データのどちらでも同じ形に揃える（新フィールドの既定値埋め）。
+  // id は文字列に統一する。実データは corpusId（"R-20" 等）を id として使う
+  // （sms-corpus.md には machine-readable な template_id が無いため）。
+  function normalizeTemplates(list) {
+    return list.map(function (t) {
+      var name = t.templateName || "";
+      var merged = Object.assign({
+        corpusId: "", source: "",
+        stage: "", customerType: "", area: "", storeName: "",
+        storeVariants: null, revisionOf: null,
+        lifecycle: detectLifecycle(name),
+        isPersonal: detectPersonal(name)
+      }, t);
+      merged.id = String(t.id != null ? t.id : t.corpusId);
+      merged.revisionOf = t.revisionOf != null ? String(t.revisionOf) : null;
+      return merged;
+    });
+  }
+
+  var TEMPLATES = normalizeTemplates(USING_REAL_DATA ? CORPUS_DATASET.templates : DUMMY_TEMPLATES);
+
+  // 実データの伏せモード対象は corpus-dataset.js 側から供給される（ダミーの STORE_NAME_PATTERNS とは別物）
+  var MASK_PATTERNS = USING_REAL_DATA && CORPUS_DATASET.storeNamePatterns
+    ? CORPUS_DATASET.storeNamePatterns
+    : STORE_NAME_PATTERNS;
+
+  // 日本語の差し込みタグ（sms-corpus.md 3-2「差し込みタグと文字数」より）。
+  // 申請書の数式そのものは変えず、実配信時の見込み文字数を「補助表示」として出すために使う。
+  var INSERT_TAGS = [
+    { token: "@顧客名@", label: "顧客名", setChars: 5, realChars: null },
+    { token: "@顧客担当者@", label: "顧客担当者", setChars: 7, realChars: null },
+    { token: "@顧客管理店舗名@", label: "顧客管理店舗名", setChars: 9, realChars: null },
+    { token: "@車名@", label: "車名", setChars: 4, realChars: null },
+    { token: "@メーカー名@", label: "メーカー名", setChars: 7, realChars: null },
+    { token: "@初年度登録年@", label: "初年度登録年", setChars: 8, realChars: 8 },
+    { token: "@ナンバー@", label: "ナンバー", setChars: 6, realChars: 16 },
+    { token: "@車両担当者@", label: "車両担当者", setChars: 7, realChars: null },
+    { token: "@車両管理店舗名@", label: "車両管理店舗名", setChars: 9, realChars: null },
+    { token: "@車検満了日@", label: "車検満了日", setChars: 7, realChars: 11 },
+    { token: "@保険満了日@", label: "保険満了日", setChars: 7, realChars: 11 },
+    { token: "@コーティング満了日@", label: "コーティング満了日", setChars: 11, realChars: 11 },
+    { token: "@入庫予約リンク（短縮URLで21文字）@", label: "入庫予約リンク", setChars: 22, realChars: 21 },
+    { token: "@入庫予約リンク@", label: "入庫予約リンク", setChars: 12, realChars: 21 }
+  ];
+
+  // 主表示（申請書の数式どおり）は変えず、日本語タグが含まれる場合だけ
+  // 「実配信時はこう変わる見込み」を副表示として計算する。realChars が無いタグ（顧客データ参照系）は
+  // 差分不明のため計算対象から外す（sms-corpus.md の「実配信時: 顧客データ参照（超過分は加算）」に対応）。
+  function insertTagRealDiff(text) {
+    var used = [];
+    var diff = 0;
+    var hasUnknown = false;
+    INSERT_TAGS.forEach(function (tag) {
+      var matches = text.match(new RegExp(escapeRegExp(tag.token), "g"));
+      if (!matches) return;
+      if (tag.realChars == null) {
+        hasUnknown = true;
+        used.push({ token: tag.token, count: matches.length, realChars: null });
+        return;
+      }
+      var d = (tag.realChars - tag.token.length) * matches.length;
+      diff += d;
+      used.push({ token: tag.token, count: matches.length, realChars: tag.realChars });
+    });
+    return { used: used, diff: diff, hasUnknown: hasUnknown };
+  }
 
   // ----------------------------------------------------------------
   // 文字数・通数・料金（申請書『【配信文章設定】…』の数式を移植）
@@ -1500,7 +1843,9 @@
   }
 
   function mappedType(t) {
-    return t.smsType === "入庫連動" ? "nyuko" : "text";
+    if (t.smsType === "入庫連動") return "nyuko";
+    if (t.smsType === "リマインド") return "reminder";
+    return "text";
   }
 
   // ----------------------------------------------------------------
@@ -1513,9 +1858,15 @@
     scene: "",
     timing: "",
     smsType: "",
+    customerType: "",
+    stage: "",
     activeOnly: false,
+    includeRetired: false,
+    includePersonal: false,
     includeTest: false,
     includePlatelike: false,
+    consolidateStores: true,
+    expandedStoreIds: [], // 「店舗違いをまとめる」表示で、カード内展開を開いているカードの id
     sort: "send_count_desc",
     masked: false,
     selectedId: null,
@@ -1545,8 +1896,8 @@
   function maskText(text) {
     if (!text) return text;
     var out = esc(text);
-    STORE_NAME_PATTERNS.forEach(function (pat) {
-      out = out.replace(new RegExp(pat, "g"), function (m) {
+    MASK_PATTERNS.forEach(function (pat) {
+      out = out.replace(new RegExp(escapeRegExp(pat), "g"), function (m) {
         return '<span class="mask-span">' + "●".repeat(Math.max(4, m.length / 2)) + '</span>';
       });
     });
@@ -1570,16 +1921,25 @@
 
   // カード見出し・トレイ表示名など、「テンプレート名 or 本文冒頭」を
   // 使う箇所で伏せモードを一貫して効かせるためのヘルパー（A1対応）。
+  //
+  // テンプレート名が空のとき（実データでは184件中43件＝23%が該当）、本文冒頭だけでは
+  // 検索でヒットしにくい。「利用シーン｜本文冒頭」の形にすることで、探す手がかりを増やす
+  // （materials/sms-corpus.md「本文からの自動命名」の指摘に対応）。
   function renderTitleWithFallback(t, len, fallbackSuffix) {
-    var raw = t.templateName ? t.templateName : bodyExcerpt(t.body, len);
-    var suffix = t.templateName ? "" : fallbackSuffix;
-    return renderBody(raw, state.masked) + esc(suffix);
+    if (t.templateName) {
+      return renderBody(t.templateName, state.masked);
+    }
+    var scenePrefix = t.scene ? t.scene + "｜" : "";
+    var raw = scenePrefix + bodyExcerpt(t.body, len);
+    return renderBody(raw, state.masked) + esc(fallbackSuffix);
   }
 
   function visibleTemplates() {
     return TEMPLATES.filter(function (t) {
       if (!state.includeTest && t.isTest) return false;
       if (!state.includePlatelike && t.hasPlatelike) return false;
+      if (!state.includeRetired && t.lifecycle === "retired") return false;
+      if (!state.includePersonal && t.isPersonal) return false;
       return true;
     });
   }
@@ -1596,6 +1956,8 @@
       }
       if (state.timing && t.timing !== state.timing) return false;
       if (state.smsType && t.smsType !== state.smsType) return false;
+      if (state.customerType && t.customerType !== state.customerType) return false;
+      if (state.stage && t.stage !== state.stage) return false;
       if (state.activeOnly && t.status !== "使用中") return false;
       if (kw) {
         var hay = ((t.templateName || "") + " " + t.body).toLowerCase();
@@ -1605,14 +1967,28 @@
     });
   }
 
+  // sendCount が無い実データ（配信数の列が設定画面に無かったクライアント）を
+  // 末尾に回す。null は -1 扱いにして比較する
+  function sendCountForSort(t) {
+    return t.sendCount == null ? -1 : t.sendCount;
+  }
+
   function sorted(list) {
     var arr = list.slice();
     if (state.sort === "send_count_desc") {
-      arr.sort(function (a, b) { return b.sendCount - a.sendCount; });
+      arr.sort(function (a, b) { return sendCountForSort(b) - sendCountForSort(a); });
     } else if (state.sort === "modified_desc") {
-      arr.sort(function (a, b) { return a.modified < b.modified ? 1 : -1; });
+      arr.sort(function (a, b) {
+        var am = a.modified || "", bm = b.modified || "";
+        return am < bm ? 1 : (am > bm ? -1 : 0);
+      });
     }
     return arr;
+  }
+
+  // 一覧・詳細で送信数を表示するときの共通フォーマット（null は「配信数不明」）
+  function sendCountLabel(t) {
+    return t.sendCount == null ? "配信数不明" : t.sendCount.toLocaleString() + "通";
   }
 
   function bodyExcerpt(text, len) {
@@ -1682,6 +2058,16 @@
       TIMINGS.map(function (s) { return { value: s, label: s }; }),
       "すべて"
     );
+    populateSelect(
+      document.getElementById("filterCustomerType"),
+      CUSTOMER_TYPES.map(function (s) { return { value: s, label: s }; }),
+      "すべて"
+    );
+    populateSelect(
+      document.getElementById("filterStage"),
+      APPROACH_STAGES.map(function (s) { return { value: s, label: s }; }),
+      "すべて"
+    );
   }
 
   function renderSceneChips() {
@@ -1700,11 +2086,13 @@
     allChip.onclick = function () { state.scene = ""; syncSceneSelect(); render(); };
     wrap.appendChild(allChip);
 
+    // 0件のシーンも隠さない（「未分類を隠さない」方針と一貫させる。タグがあるのに実例が
+    // 見つからなかったこと自体が「実務で使われていない可能性」という判断材料になるため）
     SCENES.forEach(function (scene) {
-      if (!counts[scene]) return;
+      var count = counts[scene] || 0;
       var chip = document.createElement("div");
-      chip.className = "tag-chip" + (state.scene === scene ? " active" : "");
-      chip.innerHTML = esc(scene) + " <span class=\"count\">" + counts[scene] + "</span>";
+      chip.className = "tag-chip" + (state.scene === scene ? " active" : "") + (count === 0 ? " zero" : "");
+      chip.innerHTML = esc(scene) + " <span class=\"count\">" + count + "</span>";
       chip.onclick = function () {
         state.scene = state.scene === scene ? "" : scene;
         syncSceneSelect();
@@ -1730,6 +2118,63 @@
     document.getElementById("filterScene").value = state.scene;
   }
 
+  // 「店舗違いをまとめる」OFF のとき、storeVariants を持つ行を実登録件数どおりに展開する。
+  // 店舗ごとに本文の名乗りまで作り分けているわけではない実データもあるため、本文はそのままに
+  // 店舗名・電話番号・エリアだけを差し替えた複製として表現する（代表行に「＋他N店舗」で
+  // まとめて見せるほうが実態に近いが、OFF にしたときは実登録件数のイメージを掴めるようにする）。
+  // 展開で作った仮想行（TEMPLATES本体には存在しない）を、詳細パネル・トレイからも
+  // 引けるようにするための予備索引。expandStoreVariants を呼ぶたびに更新する
+  var EXPANDED_CACHE = {};
+
+  function expandStoreVariants(list) {
+    var out = [];
+    list.forEach(function (t) {
+      out.push(Object.assign({}, t, { storeVariants: null }));
+      if (t.storeVariants) {
+        t.storeVariants.forEach(function (v, i) {
+          var variant = Object.assign({}, t, {
+            id: t.id + "__v" + i,
+            storeName: v.storeName || t.storeName,
+            reservedTel: v.tel != null ? v.tel : t.reservedTel,
+            area: v.area || t.area,
+            nykReservedUrl: v.nykReservedUrl || t.nykReservedUrl,
+            storeVariants: null
+          });
+          EXPANDED_CACHE[variant.id] = variant;
+          out.push(variant);
+        });
+      }
+    });
+    return out;
+  }
+
+  function findTemplateById(id) {
+    var hit = TEMPLATES.filter(function (t) { return t.id === id; })[0];
+    return hit || EXPANDED_CACHE[id];
+  }
+
+  // 「店舗違いをまとめる」ON のときにだけ、storeVariants を持つカードに
+  // 「＋他N店舗」の展開行を出す。展開は state.expandedStoreIds でカードごとに開閉する。
+  function storeVariantSectionHtml(t) {
+    if (!state.consolidateStores || !t.storeVariants || t.storeVariants.length === 0) return "";
+    var expanded = state.expandedStoreIds.indexOf(t.id) !== -1;
+    var rows = [{ storeName: t.storeName || "（代表）", tel: t.reservedTel, area: t.area, url: t.reservedUrl || t.nykReservedUrl }]
+      .concat(t.storeVariants.map(function (v) {
+        return { storeName: v.storeName, tel: v.tel || "", area: v.area || "", url: v.nykReservedUrl || v.url || "" };
+      }));
+    var badge = '<button class="store-variant-badge expand-store-btn" data-id="' + t.id + '">' +
+      (expanded ? "店舗一覧を閉じる" : "＋他" + t.storeVariants.length + "店舗（店舗名・電話番号が違うだけの複製）") +
+      "</button>";
+    if (!expanded) return badge;
+    var table = '<table class="store-variant-table"><tr><th>店舗</th><th>エリア</th><th>電話番号</th><th>URL</th></tr>' +
+      rows.map(function (r) {
+        var tel = r.tel ? (state.masked ? "0●●-●●●-●●●●" : esc(r.tel)) : "—";
+        var url = r.url ? (state.masked ? "https://●●●●…" : esc(r.url)) : "—";
+        return "<tr><td>" + esc(r.storeName || "—") + "</td><td>" + esc(r.area || "—") + "</td><td>" + tel + "</td><td>" + url + "</td></tr>";
+      }).join("") + "</table>";
+    return badge + table;
+  }
+
   function cardHtml(t) {
     var picked = state.tray.indexOf(t.id) !== -1;
     var titleClass = t.templateName ? "card-title" : "card-title fallback";
@@ -1743,6 +2188,10 @@
     if (t.timing) tags.push('<span class="mini-tag">' + esc(t.timing) + "</span>");
     if (t.franchise) tags.push('<span class="mini-tag">' + esc(t.franchise) + "</span>");
     tags.push('<span class="mini-tag">' + esc(t.smsType) + "</span>");
+    if (t.customerType) tags.push('<span class="mini-tag">' + esc(t.customerType) + "</span>");
+    if (t.stage) tags.push('<span class="mini-tag">' + esc(t.stage) + "</span>");
+    if (t.lifecycle === "retired") tags.push('<span class="mini-tag retired">過去の文面</span>');
+    if (t.isPersonal) tags.push('<span class="mini-tag personal">個人宛</span>');
     if (t.isTest) tags.push('<span class="mini-tag warn">テスト用</span>');
 
     return (
@@ -1756,12 +2205,13 @@
       "</div>" +
       "</div>" +
       '<div class="card-stats">' +
-      '<div class="send-count">' + t.sendCount.toLocaleString() + "通</div>" +
+      '<div class="send-count">' + sendCountLabel(t) + "</div>" +
       '<span class="status-pill ' + statusClass + '">' + esc(t.status) + "</span>" +
       "</div>" +
       "</div>" +
       '<div class="card-tags">' + tags.join("") + "</div>" +
       '<div class="card-body-excerpt">' + renderBody(bodyExcerpt(t.body, 70), state.masked) + "</div>" +
+      '<div class="store-variant-wrap">' + storeVariantSectionHtml(t) + "</div>" +
       '<div class="card-actions">' +
       '<button class="btn detail-btn" data-id="' + t.id + '">詳細</button>' +
       "</div>" +
@@ -1789,7 +2239,14 @@
   }
 
   function renderMaskBanner() {
+    document.getElementById("maskToggle").checked = state.masked;
     document.getElementById("maskBanner").classList.toggle("show", state.masked);
+    document.getElementById("realDataBanner").classList.toggle("show", USING_REAL_DATA);
+    var badge = document.getElementById("dataModeBadge");
+    badge.textContent = USING_REAL_DATA ? "実データ表示中（materials/corpus-dataset.js）" : "画面モックアップ（ダミーデータ）";
+    badge.title = USING_REAL_DATA
+      ? (CORPUS_DATASET.sourceNote || "")
+      : "materials/corpus-dataset.js が見つからないため、架空のダミーデータで表示しています";
   }
 
   function renderBottomBar() {
@@ -1808,19 +2265,33 @@
     document.getElementById("filterFranchise").value = state.franchise;
     document.getElementById("filterTiming").value = state.timing;
     document.getElementById("filterType").value = state.smsType;
+    document.getElementById("filterCustomerType").value = state.customerType;
+    document.getElementById("filterStage").value = state.stage;
     document.getElementById("filterActiveOnly").checked = state.activeOnly;
+    document.getElementById("filterIncludeRetired").checked = state.includeRetired;
+    document.getElementById("filterIncludePersonal").checked = state.includePersonal;
     document.getElementById("filterIncludeTest").checked = state.includeTest;
     document.getElementById("filterIncludePlatelike").checked = state.includePlatelike;
+    document.getElementById("filterConsolidateStores").checked = state.consolidateStores;
     document.getElementById("sortOrder").value = state.sort;
     syncSceneSelect();
 
     renderSceneChips();
 
-    var list = sorted(filtered());
-    var total = visibleTemplates().length;
+    var baseList = filtered();
+    var list = sorted(state.consolidateStores ? baseList : expandStoreVariants(baseList));
+    // 母数は表示中のリストと同じ基準（まとめる/展開する）で数える。
+    // 展開時は visibleTemplates().length のままだと母数より表示件数が多くなる自己矛盾になるため揃える
+    var total = state.consolidateStores ? visibleTemplates().length : expandStoreVariants(visibleTemplates()).length;
+    var registeredTotal = TEMPLATES.length;
 
-    document.getElementById("resultMeta").textContent =
-      list.length + " 件表示中（除外設定を反映した母数 " + total + " 件中）";
+    var metaText = list.length + " 件表示中（除外設定を反映した母数 " + total + " 件中";
+    if (state.consolidateStores) {
+      metaText += "／店舗違いをまとめた表示。実登録 " + registeredTotal + " 件）";
+    } else {
+      metaText += "／実登録件数どおりに展開表示）";
+    }
+    document.getElementById("resultMeta").textContent = metaText;
 
     var listEl = document.getElementById("cardList");
     var emptyEl = document.getElementById("emptyState");
@@ -1833,8 +2304,7 @@
     }
 
     if (state.selectedId != null) {
-      var still = TEMPLATES.some(function (t) { return t.id === state.selectedId; });
-      if (still) renderDetail(state.selectedId);
+      if (findTemplateById(state.selectedId)) renderDetail(state.selectedId);
     }
   }
 
@@ -1875,7 +2345,7 @@
     var wasEmpty = state.tray.length === 0;
     state.tray.push(id);
     if (wasEmpty) {
-      var t = TEMPLATES.filter(function (x) { return x.id === id; })[0];
+      var t = findTemplateById(id);
       if (t) state.draftSmsType = mappedType(t);
     }
     render();
@@ -1935,7 +2405,7 @@
   }
 
   function pasteBodyIntoDraft(id) {
-    var t = TEMPLATES.filter(function (x) { return x.id === id; })[0];
+    var t = findTemplateById(id);
     if (!t) return;
     pasteIntoDraft(t.body, true);
     showToast("文章案に貼り付けました（Ctrl+Z か「元に戻す」で取り消せます）");
@@ -1959,7 +2429,7 @@
       '<span class="tray-item-name">' + nameHtml + "</span>" +
       '<button class="tray-remove remove-tray-btn" data-id="' + t.id + '" title="選択から外す">×</button>' +
       "</div>" +
-      '<div class="tray-item-meta">' + company + " ／ " + t.sendCount.toLocaleString() + "通</div>" +
+      '<div class="tray-item-meta">' + company + " ／ " + sendCountLabel(t) + "</div>" +
       '<div class="tray-item-body">' + renderBody(t.body, state.masked) + "</div>" +
       '<div class="tray-item-actions">' +
       '<button class="btn primary paste-body-btn" data-id="' + t.id + '">この本文を貼り付け</button>' +
@@ -1979,11 +2449,11 @@
     } else if (state.draftSmsType === "nyuko") {
       noteEl.textContent = "改行は2文字としてカウント。入庫予約URLが末尾に自動挿入され、常に36文字加算されます。";
     } else {
-      noteEl.textContent = "改行は1文字としてカウント。置換後の文字数で70文字以内（1通のみ）に収める必要があります。※ダミーデータにリマインドの文例はありません。手動で試す場合にお使いください。";
+      noteEl.textContent = "改行は1文字としてカウント。置換後の文字数で70文字以内（1通のみ）に収める必要があります。";
     }
 
     var trayTemplates = state.tray
-      .map(function (id) { return TEMPLATES.filter(function (t) { return t.id === id; })[0]; })
+      .map(function (id) { return findTemplateById(id); })
       .filter(Boolean);
 
     var trayEl = document.getElementById("trayList");
@@ -2029,6 +2499,36 @@
     renderCounter();
   }
 
+  // 主表示（申請書の数式）は変えず、日本語タグ（@車検満了日@ 等）を含む場合だけ
+  // 実配信時の見込み文字数・通数を副表示する（テキスト／入庫連動のみ。リマインドは
+  // 元から英語タグの置換後文字数を主表示にしているため対象外）
+  function renderInsertTagNote(text, mainTotal) {
+    var noteEl = document.getElementById("counterInsertTagNote");
+    var r = insertTagRealDiff(text);
+    if (r.used.length === 0) {
+      noteEl.style.display = "none";
+      return;
+    }
+    var realTotal = mainTotal + r.diff;
+    var realSegments = countSegments(realTotal);
+    var mainSegments = countSegments(mainTotal);
+    var tagList = r.used.map(function (u) {
+      if (u.realChars == null) return u.token + "×" + u.count + "（実配信時の文字数は顧客データ参照のため不明）";
+      var diffChars = (u.realChars - u.token.length);
+      var sign = diffChars >= 0 ? "+" : "";
+      return u.token + "×" + u.count + "（実配信時 " + sign + (diffChars * u.count) + "文字）";
+    }).join(" ／ ");
+    var msg = "日本語タグを含みます: " + tagList + "。";
+    if (!r.hasUnknown) {
+      msg += " 実配信時の見込み: " + realTotal + "文字";
+      if (realSegments !== mainSegments) {
+        msg += "（" + realSegments + "通に変わる可能性があります）";
+      }
+    }
+    noteEl.textContent = msg;
+    noteEl.style.display = "block";
+  }
+
   function renderCounter() {
     var c = countChars(state.draftText, state.draftSmsType);
     var mainEl = document.getElementById("counterMain");
@@ -2039,7 +2539,14 @@
       mainEl.textContent = "0文字";
       detailEl.textContent = "";
       warnEl.innerHTML = "";
+      document.getElementById("counterInsertTagNote").style.display = "none";
       return;
+    }
+
+    if (state.draftSmsType !== "reminder") {
+      renderInsertTagNote(state.draftText, c.total);
+    } else {
+      document.getElementById("counterInsertTagNote").style.display = "none";
     }
 
     if (state.draftSmsType === "reminder") {
@@ -2136,13 +2643,13 @@
     }
     lines.push("");
     lines.push("■ 参考にした文例");
-    var trayTemplates = state.tray.map(function (id) { return TEMPLATES.filter(function (t) { return t.id === id; })[0]; }).filter(Boolean);
+    var trayTemplates = state.tray.map(function (id) { return findTemplateById(id); }).filter(Boolean);
     if (trayTemplates.length === 0) {
       lines.push("（なし）");
     } else {
       trayTemplates.forEach(function (t) {
         var name = t.templateName || bodyExcerpt(t.body, 16) + "（名称なし）";
-        lines.push("・" + name + "（" + t.sendCount.toLocaleString() + "通）");
+        lines.push("・" + name + "（" + sendCountLabel(t) + "）");
       });
     }
     return lines.join("\n");
@@ -2152,8 +2659,8 @@
   function maskTextPlain(text) {
     if (!text) return text;
     var out = text;
-    STORE_NAME_PATTERNS.forEach(function (pat) {
-      out = out.replace(new RegExp(pat, "g"), function (m) { return "●".repeat(Math.max(4, m.length / 2)); });
+    MASK_PATTERNS.forEach(function (pat) {
+      out = out.replace(new RegExp(escapeRegExp(pat), "g"), function (m) { return "●".repeat(Math.max(4, m.length / 2)); });
     });
     out = out.replace(PHONE_REGEX, function (m) { return "0●●-●●●-●●●●".slice(0, m.length); });
     out = out.replace(URL_REGEX, function () { return "https://●●●●●●●●●●●●●●●"; });
@@ -2161,7 +2668,7 @@
   }
 
   function renderDetail(id) {
-    var t = TEMPLATES.filter(function (x) { return x.id === id; })[0];
+    var t = findTemplateById(id);
     if (!t) return;
     var overlay = document.getElementById("detailOverlay");
     var titleHtml = renderTitleWithFallback(t, 999, "（テンプレート名なし）");
@@ -2177,8 +2684,39 @@
       ["コールリスト登録者のみ", t.callListOnly ? "はい" : "いいえ"],
       ["SMSの型", esc(t.smsType)],
       ["フランチャイズ", t.franchise ? esc(t.franchise) : "—"],
-      ["利用シーン", t.scene ? esc(t.scene) : "未分類"]
+      ["利用シーン", t.scene ? esc(t.scene) : "未分類"],
+      ["顧客区分", t.customerType ? esc(t.customerType) : "—"],
+      ["アプローチ段階", t.stage ? esc(t.stage) : "—"],
+      ["エリア", t.area ? esc(t.area) : "—"],
+      ["店舗", t.storeName ? maskCompany(t.storeName) : "—"],
+      ["状態区分（現役／過去）", t.lifecycle === "retired" ? "過去（【使用不可】等の名前で保存）" : "現役"]
     ];
+
+    var revisionHtml = "";
+    if (t.revisionOf) {
+      var prev = findTemplateById(t.revisionOf);
+      if (prev) {
+        revisionHtml =
+          '<div class="detail-section"><h4>過去版</h4>' +
+          '<div class="revision-box">' +
+          '<div>' + renderBody(prev.templateName || "（名称なし）", state.masked) + '</div>' +
+          '<div class="rev-body">' + renderBody(prev.body, state.masked) + '</div>' +
+          '</div></div>';
+      }
+    } else {
+      var next = TEMPLATES.filter(function (x) { return x.revisionOf === t.id; })[0];
+      if (next) {
+        revisionHtml =
+          '<div class="detail-section"><h4>この文面の現行版</h4>' +
+          '<div class="revision-box">この文面は過去版です。現行版は「' +
+          renderBody(next.templateName || bodyExcerpt(next.body, 20), state.masked) + '」です。</div></div>';
+      }
+    }
+
+    var sourceHtml = t.source
+      ? '<div class="detail-section"><h4>出典</h4><div style="font-size:12px;color:var(--text-sub);">' +
+        esc(t.source) + (t.corpusId ? "（" + esc(t.corpusId) + "）" : "") + "</div></div>"
+      : "";
 
     overlay.innerHTML =
       '<div class="detail-header">' +
@@ -2205,15 +2743,17 @@
       }).join("") +
       "</table>" +
       "</div>" +
+      revisionHtml +
+      sourceHtml +
       '<div class="detail-section">' +
       "<h4>実績・履歴</h4>" +
       '<table class="kv-table">' +
-      "<tr><td class=\"k\">送信通数</td><td>" + t.sendCount.toLocaleString() + " 通</td></tr>" +
+      "<tr><td class=\"k\">送信通数</td><td>" + sendCountLabel(t) + "</td></tr>" +
       "<tr><td class=\"k\">状態</td><td>" + esc(t.status) + "</td></tr>" +
-      "<tr><td class=\"k\">作成者</td><td>" + esc(t.createdBy) + "</td></tr>" +
-      "<tr><td class=\"k\">最終更新者</td><td>" + esc(t.modifiedBy) + "</td></tr>" +
-      "<tr><td class=\"k\">作成日</td><td>" + esc(t.created) + "</td></tr>" +
-      "<tr><td class=\"k\">最終更新日</td><td>" + esc(t.modified) + "</td></tr>" +
+      "<tr><td class=\"k\">作成者</td><td>" + (t.createdBy ? esc(t.createdBy) : "—") + "</td></tr>" +
+      "<tr><td class=\"k\">最終更新者</td><td>" + (t.modifiedBy ? esc(t.modifiedBy) : "—") + "</td></tr>" +
+      "<tr><td class=\"k\">作成日</td><td>" + (t.created ? esc(t.created) : "—") + "</td></tr>" +
+      "<tr><td class=\"k\">最終更新日</td><td>" + (t.modified ? esc(t.modified) : "—") + "</td></tr>" +
       "</table>" +
       "</div>" +
       "</div>";
@@ -2259,10 +2799,13 @@
   function setUpdatedAt() {
     var now = new Date();
     var pad = function (n) { return String(n).padStart(2, "0"); };
-    var text =
+    var stamp =
       now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
-      " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + " 時点のダミーデータ表示";
-    document.getElementById("updatedAt").textContent = "最終更新: " + text;
+      " " + pad(now.getHours()) + ":" + pad(now.getMinutes());
+    var label = USING_REAL_DATA
+      ? "実データ（" + (CORPUS_DATASET.sourceUpdated || "取得日不明") + "取得の資料）を " + stamp + " に表示"
+      : stamp + " 時点のダミーデータ表示";
+    document.getElementById("updatedAt").textContent = "最終更新: " + label;
   }
 
   // ----------------------------------------------------------------
@@ -2293,8 +2836,24 @@
       state.smsType = e.target.value;
       render();
     });
+    document.getElementById("filterCustomerType").addEventListener("change", function (e) {
+      state.customerType = e.target.value;
+      render();
+    });
+    document.getElementById("filterStage").addEventListener("change", function (e) {
+      state.stage = e.target.value;
+      render();
+    });
     document.getElementById("filterActiveOnly").addEventListener("change", function (e) {
       state.activeOnly = e.target.checked;
+      render();
+    });
+    document.getElementById("filterIncludeRetired").addEventListener("change", function (e) {
+      state.includeRetired = e.target.checked;
+      render();
+    });
+    document.getElementById("filterIncludePersonal").addEventListener("change", function (e) {
+      state.includePersonal = e.target.checked;
       render();
     });
     document.getElementById("filterIncludeTest").addEventListener("change", function (e) {
@@ -2303,6 +2862,10 @@
     });
     document.getElementById("filterIncludePlatelike").addEventListener("change", function (e) {
       state.includePlatelike = e.target.checked;
+      render();
+    });
+    document.getElementById("filterConsolidateStores").addEventListener("change", function (e) {
+      state.consolidateStores = e.target.checked;
       render();
     });
     document.getElementById("sortOrder").addEventListener("change", function (e) {
@@ -2320,24 +2883,39 @@
       state.scene = "";
       state.timing = "";
       state.smsType = "";
+      state.customerType = "";
+      state.stage = "";
       state.activeOnly = false;
+      state.includeRetired = false;
+      state.includePersonal = false;
       state.includeTest = false;
       state.includePlatelike = false;
+      // 「店舗違いをまとめる」は表示のまとめ方の好みなのでリセット対象に含めない
       render();
     });
     document.getElementById("overlayBackdrop").addEventListener("click", closeDetail);
 
     document.getElementById("cardList").addEventListener("click", function (e) {
       var detailBtn = e.target.closest(".detail-btn");
+      var expandBtn = e.target.closest(".expand-store-btn");
+      var variantTable = e.target.closest(".store-variant-table");
       var card = e.target.closest(".card");
       if (!card) return;
-      var id = Number(card.getAttribute("data-id"));
+      var id = card.getAttribute("data-id");
+      if (expandBtn) {
+        var idx = state.expandedStoreIds.indexOf(id);
+        if (idx === -1) state.expandedStoreIds.push(id); else state.expandedStoreIds.splice(idx, 1);
+        render();
+        return;
+      }
       if (detailBtn) {
         state.selectedId = id;
         render();
         renderDetail(id);
         return;
       }
+      // 展開した店舗違いテーブルの文字を読みたいだけのクリックで選択が切り替わらないようにする
+      if (variantTable) return;
       // カード本体のどこを押しても選択のオン/オフ（B1）
       toggleTray(id);
     });
@@ -2388,9 +2966,9 @@
       var pasteBtn = e.target.closest(".paste-body-btn");
       var removeBtn = e.target.closest(".remove-tray-btn");
       if (pasteBtn) {
-        pasteBodyIntoDraft(Number(pasteBtn.getAttribute("data-id")));
+        pasteBodyIntoDraft(pasteBtn.getAttribute("data-id"));
       } else if (removeBtn) {
-        removeFromTray(Number(removeBtn.getAttribute("data-id")));
+        removeFromTray(removeBtn.getAttribute("data-id"));
       }
     });
     document.getElementById("undoDraftBtn").addEventListener("click", undoDraft);
@@ -2423,6 +3001,8 @@
   // ----------------------------------------------------------------
   // 初期化
   // ----------------------------------------------------------------
+  // 実データ表示中は伏せモードを既定 ON にする（社外・画面共有時の事故を防ぐため）
+  if (USING_REAL_DATA) state.masked = true;
   initFilters();
   bindEvents();
   setUpdatedAt();
