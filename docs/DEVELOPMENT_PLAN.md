@@ -45,8 +45,23 @@
 ## ③ 依存の判定
 
 - npm 依存: **あり**（BigQuery クライアントライブラリ、Webフレームワーク等）
-- 依存追加は Dev Container 内でのみ実施。`.npmrc` の `min-release-age=7`（7日間の検疫期間）が効くため、**使うライブラリは着手直後に確定させる**（後から足すと最短でも1週間待つことになる）
-- lockfile（`package-lock.json` 等）は必ずコミットする
+- 依存追加は Dev Container 内でのみ実施
+- **⚠ 検疫期間は現状効いていない可能性が高い**（2026-09-21 確認）。`.npmrc` に `min-release-age=7`（7日間の検疫期間）が設定されているが、`npm-safety.md` によればこれが有効なのは **npm 11.10+**。現在のコンテナは **npm 10.8.2 / Node 20.20.2** のため無視される。「後から足すと1週間待つ」という制約は現時点ではあてはまらない
+  - ただし構成を後から変える手戻りは普通に大きいので、**使うライブラリは着手直後に確定させる**方針自体は維持する
+  - pnpm を使う場合は `minimum-release-age=10080`（分単位）が効くため、そちらでは検疫が機能する
+- lockfile（`package-lock.json` / `pnpm-lock.yaml`）は必ずコミットする
+
+### 依存構成の候補（2026-09-21 時点・**未確定**）
+
+| 用途 | 候補 | 理由 |
+|---|---|---|
+| フレームワーク | **Next.js**（React / TypeScript） | 「伏せモードはサーバ側でマスクする」（§④）を満たすには画面だけの実装では不可能で、API側の処理が要る。画面とAPIを1つで持てる。Phase 1.5 の Cloud Run + IAP にもそのまま載る |
+| スタイル | **Tailwind CSS** | 検索・フィルター・一覧のUIには十分。`npm-safety.md` の既知パッケージ |
+| BigQuery | **@google-cloud/bigquery** | 公式クライアント。既知パッケージ。§⑤の「SQLを1本流してローカルに落とす」処理でのみ使う |
+| 入力値検証 | **zod** | 検索・フィルターのクエリパラメータを境界で検証する |
+| パッケージ管理 | **pnpm** | Dockerfile で corepack 経由で有効化済み |
+
+**あえて入れないもの**: データベース（SQLite 等）。テンプレートは1万件規模なので、キャッシュしたJSONをメモリ上で配列フィルタすれば足りる。DBを増やすと依存も運用も増える。
 
 ---
 
@@ -235,12 +250,23 @@ Phase 1 のスコープに含めるかは、実データを見てから判断す
 - **リマインド側の文面テンプレートの所在** → **同じテーブルに入っていそう**。名前に「入庫・前日・リマインド・予約・来店」を含むもの1,217件、入庫予約用URL設定3,593件。「受注側だけ」ではなかった
 - **BigQueryのリージョン** → **asia-northeast1** で確定
 
+### 完了済み（2026-09-18〜21）
+
+- `docs/engineer-consultation.md` 記入済み（有効期限 2026-12-18）→ **L3 の開発着手条件クリア**
+- `.devcontainer/init-firewall.sh` に `bigquery.googleapis.com` / `iamcredentials.googleapis.com` を追記
+- `.devcontainer/Dockerfile` に Google Cloud CLI を追加 → 再ビルド済み（gcloud 585.0.0 / bq 2.1.38）
+- `gcloud auth login` 完了（`haruki.yoneyama@inter-zone.jp` がアクティブ）。**プロジェクトは未設定**（`Your current project is [None]`）
+
 ### 次回セッションで最初にやるべき作業
 
-1. `docs/engineer-consultation.md` を作成し6項目を埋める（L3 の開発着手条件。CI が gate する）。相談相手の GitHub username は内田さんに要確認
-2. `.devcontainer/init-firewall.sh` に `bigquery.googleapis.com` を追記する
-3. ビューに接続してクエリを1本流し、`vw_sms_template_usage` の中身を確認する
-4. §⑧の残りの確認事項（電話番号2,784件の性質・母数の不一致・リマインド側の切り分け）を内田さんに送る
+1. **依存ライブラリを確定する**（§③の候補表。未確定のまま実装に入らない）
+2. **画面モックアップを作る** — 検索・一覧・詳細・伏せモードが分かるもの
+3. 内田さんからの返信が届いていれば、接続情報（GCPプロジェクト名・サービスアカウントのメールアドレス）を設定し、`vw_sms_template_usage` にクエリを1本流す
+
+### 内田さん待ち（2026-09-21 時点で返信なし）
+
+- BigQuery の接続情報（GCPプロジェクト名・impersonation 先のサービスアカウント）
+- §⑧「未決事項（内田さんに確認する）」の3件（電話番号2,784件の裏取り・母数の不一致・リマインド側の切り分け）
 
 ---
 
