@@ -1,0 +1,14 @@
+# 依存・ビルド成果物
+node_modules/
+.pnpm-store/
+.next/
+dist/
+build/
+coverage/
+
+# BigQuery から落としたキャッシュ（実データのため絶対にコミットしない）
+data/
+
+# エディタ・OS
+.DS_Store
+*.log

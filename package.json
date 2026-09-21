@@ -1,0 +1,37 @@
+{
+  "name": "sms-text-helper",
+  "version": "0.1.0",
+  "private": true,
+  "description": "過去に送られたSMS文例を検索して文章案・依頼まで出せる社内ツール（Phase 1: 米山さん個人がDev Container内でローカル起動）",
+  "engines": {
+    "node": ">=20.9.0 <21"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "next": "^16.3.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^20",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9",
+    "eslint-config-next": "^16.3.5",
+    "postcss": "^8.5.28",
+    "prettier": "^3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}
