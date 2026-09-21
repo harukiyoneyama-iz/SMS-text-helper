@@ -401,9 +401,240 @@
     color: var(--text-sub);
   }
 
+  /* ステップナビ */
+  .step-nav {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .step-item {
+    flex: 1;
+    text-align: center;
+    padding: 8px 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--text-sub);
+    background: var(--chip-bg);
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .step-item .step-num {
+    display: inline-block;
+    width: 18px; height: 18px;
+    line-height: 18px;
+    border-radius: 50%;
+    background: #cbd5e0;
+    color: #fff;
+    font-size: 11px;
+    margin-right: 4px;
+  }
+  .step-item.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .step-item.active .step-num { background: var(--accent); }
+  .step-badge {
+    display: inline-block;
+    background: #e53e3e;
+    color: #fff;
+    font-size: 11px;
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    margin-left: 4px;
+  }
+
+  .step-panel-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px 20px 60px;
+  }
+  .panel-columns {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .panel-col {
+    flex: 1;
+    min-width: 320px;
+  }
+  .panel-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .panel-box h3 {
+    font-size: 13px;
+    margin: 0 0 10px;
+    color: var(--text-sub);
+  }
+
+  .sms-type-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .sms-type-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .sms-type-tab.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .tray-empty {
+    color: var(--text-sub);
+    font-size: 12.5px;
+    padding: 10px 0;
+    text-align: center;
+  }
+  .tray-item {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+  }
+  .tray-item-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12.5px;
+    margin-bottom: 4px;
+  }
+  .tray-item-name { font-weight: bold; }
+  .tray-item-meta { color: var(--text-sub); font-size: 11.5px; }
+  .tray-item-actions { display: flex; gap: 6px; margin-top: 4px; }
+
+  textarea.draft-textarea {
+    width: 100%;
+    min-height: 160px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .counter-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .counter-main {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--accent);
+  }
+  .counter-detail {
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .counter-warn {
+    color: var(--warn-text);
+    font-weight: bold;
+    font-size: 12.5px;
+    margin-top: 6px;
+  }
+  .counter-error {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-text);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    margin-top: 6px;
+  }
+  .provisional-note {
+    font-size: 11px;
+    color: #b7791f;
+    background: #fffaf0;
+    border: 1px solid #f6e05e;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-top: 8px;
+    display: inline-block;
+  }
+
+  .replace-var-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .replace-var-btn {
+    font-size: 11.5px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .form-row {
+    margin-bottom: 10px;
+  }
+  .form-row label {
+    display: block;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-sub);
+    margin-bottom: 3px;
+  }
+
+  .checklist-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .checklist-table td {
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .checklist-table td.ck-label {
+    color: var(--text-sub);
+    width: 45%;
+  }
+  .checklist-table td.ck-highlight {
+    font-weight: bold;
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  .request-preview {
+    white-space: pre-wrap;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  .slack-hint {
+    font-size: 11.5px;
+    color: var(--text-sub);
+    margin-top: 6px;
+  }
+
   @media (max-width: 860px) {
     main { flex-direction: column; }
     .sidebar { width: 100%; position: static; }
+    .panel-columns { flex-direction: column; }
   }
 </style>
 </head>
@@ -424,9 +655,14 @@
       </label>
     </div>
   </div>
+  <div class="step-nav" id="stepNav">
+    <div class="step-item" data-step="search"><span class="step-num">1</span>文例をさがす</div>
+    <div class="step-item" data-step="draft"><span class="step-num">2</span>文章案をつくる<span class="step-badge" id="trayBadge" style="display:none;"></span></div>
+    <div class="step-item" data-step="request"><span class="step-num">3</span>依頼文を出す</div>
+  </div>
 </header>
 
-<main>
+<main id="stepPanelSearch">
   <aside class="sidebar">
     <h2>絞り込み</h2>
     <div class="filter-group">
@@ -490,9 +726,101 @@
   </div>
 </main>
 
+<div class="step-panel-wrap" id="stepPanelDraft" style="display:none;">
+  <div class="panel-columns">
+    <div class="panel-col">
+      <div class="panel-box">
+        <h3>SMSの型</h3>
+        <div class="sms-type-tabs" id="draftSmsTypeTabs">
+          <div class="sms-type-tab" data-type="text">テキスト</div>
+          <div class="sms-type-tab" data-type="nyuko">入庫連動</div>
+          <div class="sms-type-tab" data-type="reminder">リマインド</div>
+        </div>
+        <div id="smsTypeNote" style="font-size:12px;color:var(--text-sub);"></div>
+      </div>
+
+      <div class="panel-box">
+        <h3>参考にした文例</h3>
+        <div id="trayList"></div>
+      </div>
+    </div>
+
+    <div class="panel-col">
+      <div class="panel-box">
+        <h3>文章案</h3>
+        <div id="replaceVarRow" class="replace-var-row" style="display:none;"></div>
+        <textarea class="draft-textarea" id="draftTextarea" placeholder="左の文例から「本文を挿入」するか、直接入力してください"></textarea>
+        <div class="counter-row">
+          <span class="counter-main" id="counterMain"></span>
+          <span class="counter-detail" id="counterDetail"></span>
+        </div>
+        <div id="counterWarn"></div>
+        <div class="provisional-note">※ 文字数・通数・料金は申請書「【配信文章設定】…」の数式をそのまま再現した表示です。長文対応リリース後の仕様変更で数値が変わる可能性があります。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="step-panel-wrap" id="stepPanelRequest" style="display:none;">
+  <div class="panel-columns">
+    <div class="panel-col">
+      <div class="panel-box">
+        <h3>今回依頼する設定</h3>
+        <div class="form-row">
+          <label>作業内容</label>
+          <select id="reqWorkType">
+            <option value="追加">追加</option>
+            <option value="修正">修正</option>
+            <option value="停止">停止</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>停止状態</label>
+          <select id="reqStopState">
+            <option value="設定後すぐ「停止」解除してOK">設定後すぐ「停止」解除してOK</option>
+            <option value="指示があるまで「停止」のままにしておく">指示があるまで「停止」のままにしておく</option>
+            <option value="停止">停止</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>テンプレート名</label>
+          <input type="text" id="reqTemplateName" placeholder="例: 【岡山円山店用】車検5ヶ月前">
+        </div>
+        <div id="reqNyukoFields" style="display:none;">
+          <div class="form-row">
+            <label>URL種別</label>
+            <input type="text" id="reqUrlType" placeholder="例: 作業グループリンク">
+          </div>
+          <div class="form-row">
+            <label>作業種別名／作業グループ名</label>
+            <input type="text" id="reqWorkGroupName" placeholder="例: 車検グループ">
+          </div>
+          <div class="form-row">
+            <label>店舗名／工場名</label>
+            <input type="text" id="reqStoreName" placeholder="例: 岡山円山店">
+          </div>
+        </div>
+        <table class="checklist-table">
+          <tr><td class="ck-label">SMSの型</td><td class="ck-highlight" id="reqSmsTypeDisplay"></td></tr>
+          <tr><td class="ck-label">文字数 / 件数 / 料金</td><td id="reqCountDisplay"></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="panel-col">
+      <div class="panel-box">
+        <h3>依頼文プレビュー</h3>
+        <div class="request-preview" id="requestPreview"></div>
+        <button class="btn primary" id="copyRequestBtn" style="margin-top:10px;">依頼文をコピー</button>
+        <div class="slack-hint">コピーして Slack に貼り付けてください（このツールから Slack へは投稿しません）</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="footer-note">
   ※ このモックアップの文例・会社名・電話番号・URLはすべて架空のものです。実データは含まれていません。<br>
-  ※ 一括CSVエクスポートは受け入れ条件上、意図的に付けていません（コピーのみ）。
+  ※ 一括CSVエクスポートは受け入れ条件上、意図的に付けていません（コピーのみ）。<br>
+  ※ 文字数・通数・料金の計算式は、社内で実際に使われている申請書の数式を移植したものです。
 </div>
 
 <div class="overlay-backdrop" id="overlayBackdrop"></div>
@@ -926,6 +1254,70 @@
   var URL_REGEX = /https?:\/\/[^\s]+/g;
 
   // ----------------------------------------------------------------
+  // 文字数・通数・料金（申請書『【配信文章設定】…』の数式を移植）
+  // ----------------------------------------------------------------
+  // ［SMS】配信料金表: 70文字まで1通25円、以降66文字ごとに+1通+10円、660文字(10通)が上限
+  var MAX_SEGMENTS = 10;
+  var MAX_CHARS = 660;
+  var BASE_PRICE = 25.0;
+  var PRICE_STEP = 10.0;
+  var SEGMENT_STEP = 66;
+
+  // 入庫予約URLは末尾に固定挿入され、常に36文字としてカウントされる（【SMS】入庫連動シート）
+  var NYUKO_URL_CHARS = 36;
+
+  // 【SMS】リマインドシートの置換表（置換元→実際に配信される文字数）
+  var REPLACE_VARS = [
+    { token: "@customer_name@", label: "お客様名", chars: 15 },
+    { token: "@shop_name@", label: "店舗名/工場名", chars: 11 },
+    { token: "@work_name@", label: "作業種別名", chars: 11 },
+    { token: "@visit_date@", label: "来店日時", chars: 12 },
+    { token: "@reserve_change_url@", label: "予約変更URL", chars: 20 }
+  ];
+
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // テキスト／入庫連動: LEN(CLEAN(本文)) + 改行数×2 (+入庫連動のみ36)
+  // リマインド: 置換後の文字数、改行は1文字
+  function countChars(text, smsType) {
+    var pureLen = text.length;
+    var cleanLen = text.replace(/\n/g, "").length;
+    var newlineCount = pureLen - cleanLen;
+
+    if (smsType === "reminder") {
+      var replaceDiff = 0;
+      var usedVars = [];
+      REPLACE_VARS.forEach(function (rv) {
+        var matches = text.match(new RegExp(escapeRegExp(rv.token), "g"));
+        if (matches) {
+          replaceDiff += matches.length * (rv.chars - rv.token.length);
+          usedVars.push({ token: rv.token, count: matches.length, chars: rv.chars });
+        }
+      });
+      var total = cleanLen + replaceDiff + newlineCount * 1;
+      return { pureLen: pureLen, newlineCount: newlineCount, newlineWeight: 1, urlChars: 0, usedVars: usedVars, total: total };
+    }
+
+    var urlChars = smsType === "nyuko" ? NYUKO_URL_CHARS : 0;
+    var total2 = cleanLen + newlineCount * 2 + urlChars;
+    return { pureLen: pureLen, newlineCount: newlineCount, newlineWeight: 2, urlChars: urlChars, usedVars: [], total: total2 };
+  }
+
+  // ROUNDUP(IF(文字数<=70, 1, 文字数/66), 0)
+  function countSegments(total) {
+    if (total <= 0) return 0;
+    if (total <= 70) return 1;
+    return Math.ceil(total / SEGMENT_STEP);
+  }
+
+  function priceForSegments(segments) {
+    if (segments <= 0) return 0;
+    return BASE_PRICE + (segments - 1) * PRICE_STEP;
+  }
+
+  // ----------------------------------------------------------------
   // 状態
   // ----------------------------------------------------------------
   var state = {
@@ -940,7 +1332,17 @@
     includePlatelike: false,
     sort: "send_count_desc",
     masked: false,
-    selectedId: null
+    selectedId: null,
+    step: "search",
+    tray: [],
+    draftText: "",
+    draftSmsType: "text",
+    reqWorkType: "追加",
+    reqStopState: "設定後すぐ「停止」解除してOK",
+    reqTemplateName: "",
+    reqUrlType: "",
+    reqWorkGroupName: "",
+    reqStoreName: ""
   };
 
   // ----------------------------------------------------------------
@@ -1146,12 +1548,29 @@
       '<div class="card-actions">' +
       '<button class="btn detail-btn" data-id="' + t.id + '">詳細</button>' +
       '<button class="btn copy-btn" data-id="' + t.id + '">コピー</button>' +
+      '<button class="btn tray-btn" data-id="' + t.id + '">' + (state.tray.indexOf(t.id) !== -1 ? "✓ 追加済み" : "＋ 文章案に追加") + '</button>' +
       "</div>" +
       "</div>"
     );
   }
 
   function render() {
+    renderStepNav();
+
+    document.getElementById("stepPanelSearch").style.display = state.step === "search" ? "" : "none";
+    document.getElementById("stepPanelDraft").style.display = state.step === "draft" ? "" : "none";
+    document.getElementById("stepPanelRequest").style.display = state.step === "request" ? "" : "none";
+
+    if (state.step === "search") {
+      renderSearchPanel();
+    } else if (state.step === "draft") {
+      renderDraftPanel();
+    } else if (state.step === "request") {
+      renderRequestPanel();
+    }
+  }
+
+  function renderSearchPanel() {
     document.getElementById("keyword").value = state.keyword;
     document.getElementById("filterClient").value = state.client;
     document.getElementById("filterFranchise").value = state.franchise;
@@ -1185,6 +1604,225 @@
       var still = TEMPLATES.some(function (t) { return t.id === state.selectedId; });
       if (still) renderDetail(state.selectedId);
     }
+  }
+
+  function renderStepNav() {
+    var badge = document.getElementById("trayBadge");
+    if (state.tray.length > 0) {
+      badge.style.display = "inline-block";
+      badge.textContent = state.tray.length;
+    } else {
+      badge.style.display = "none";
+    }
+    document.querySelectorAll(".step-item").forEach(function (el) {
+      el.classList.toggle("active", el.getAttribute("data-step") === state.step);
+    });
+  }
+
+  // ----------------------------------------------------------------
+  // ② 文章案をつくる
+  // ----------------------------------------------------------------
+  function addToTray(id) {
+    if (state.tray.indexOf(id) === -1) state.tray.push(id);
+    render();
+  }
+
+  function removeFromTray(id) {
+    state.tray = state.tray.filter(function (x) { return x !== id; });
+    render();
+  }
+
+  function insertBodyIntoDraft(id) {
+    var t = TEMPLATES.filter(function (x) { return x.id === id; })[0];
+    if (!t) return;
+    var ta = document.getElementById("draftTextarea");
+    var body = t.body;
+    if (state.draftText && !state.draftText.endsWith("\n")) {
+      state.draftText += "\n" + body;
+    } else {
+      state.draftText += body;
+    }
+    ta.value = state.draftText;
+    renderDraftPanel();
+  }
+
+  function trayItemHtml(t) {
+    var name = t.templateName ? esc(t.templateName) : bodyExcerpt(t.body, 16) + "（名称なし）";
+    var company = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
+    return (
+      '<div class="tray-item" data-id="' + t.id + '">' +
+      '<div class="tray-item-top">' +
+      '<span class="tray-item-name">' + name + "</span>" +
+      '<span class="tray-item-meta">' + t.sendCount.toLocaleString() + "通</span>" +
+      "</div>" +
+      '<div class="tray-item-meta">' + company + "</div>" +
+      '<div class="tray-item-actions">' +
+      '<button class="btn insert-body-btn" data-id="' + t.id + '">本文を挿入</button>' +
+      '<button class="btn remove-tray-btn" data-id="' + t.id + '">外す</button>' +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  function renderDraftPanel() {
+    document.querySelectorAll(".sms-type-tab").forEach(function (el) {
+      el.classList.toggle("active", el.getAttribute("data-type") === state.draftSmsType);
+    });
+
+    var noteEl = document.getElementById("smsTypeNote");
+    if (state.draftSmsType === "text") {
+      noteEl.textContent = "改行は2文字としてカウントされます。";
+    } else if (state.draftSmsType === "nyuko") {
+      noteEl.textContent = "改行は2文字としてカウント。入庫予約URLが末尾に自動挿入され、常に36文字加算されます。";
+    } else {
+      noteEl.textContent = "改行は1文字としてカウント。置換後の文字数で70文字以内（1通のみ）に収める必要があります。";
+    }
+
+    var trayEl = document.getElementById("trayList");
+    if (state.tray.length === 0) {
+      trayEl.innerHTML = '<div class="tray-empty">「① 文例をさがす」で気に入った文例の「＋ 文章案に追加」を押すと、ここに溜まります。</div>';
+    } else {
+      trayEl.innerHTML = state.tray
+        .map(function (id) { return TEMPLATES.filter(function (t) { return t.id === id; })[0]; })
+        .filter(Boolean)
+        .map(trayItemHtml)
+        .join("");
+    }
+
+    var replaceRow = document.getElementById("replaceVarRow");
+    if (state.draftSmsType === "reminder") {
+      replaceRow.style.display = "flex";
+      replaceRow.innerHTML = REPLACE_VARS.map(function (rv) {
+        return '<button class="replace-var-btn" data-token="' + esc(rv.token) + '">' + esc(rv.token) + "（" + esc(rv.label) + " " + rv.chars + "文字）</button>";
+      }).join("");
+    } else {
+      replaceRow.style.display = "none";
+      replaceRow.innerHTML = "";
+    }
+
+    var ta = document.getElementById("draftTextarea");
+    if (ta.value !== state.draftText) ta.value = state.draftText;
+
+    renderCounter();
+  }
+
+  function renderCounter() {
+    var c = countChars(state.draftText, state.draftSmsType);
+    var mainEl = document.getElementById("counterMain");
+    var detailEl = document.getElementById("counterDetail");
+    var warnEl = document.getElementById("counterWarn");
+
+    if (state.draftSmsType === "reminder") {
+      var over = c.total > 70;
+      mainEl.textContent = c.total + "文字 / " + (over ? "—" : "1通");
+      var detailParts = ["改行 " + c.newlineCount + "ヶ所（" + c.newlineCount + "文字）"];
+      c.usedVars.forEach(function (v) {
+        detailParts.push(v.token + "×" + v.count + "（" + v.chars + "文字換算）");
+      });
+      detailEl.textContent = "（" + detailParts.join(" ／ ") + "）";
+      warnEl.innerHTML = over
+        ? '<div class="counter-error">リマインド配信は70文字までです（現在 ' + c.total + " 文字）</div>"
+        : "";
+      return;
+    }
+
+    var segments = countSegments(c.total);
+    var price = priceForSegments(segments);
+    var overLimit = c.total > MAX_CHARS;
+
+    mainEl.textContent = c.total + "文字 / " + (overLimit ? "—" : segments + "通");
+    var parts = ["改行 " + c.newlineCount + "ヶ所（" + (c.newlineCount * 2) + "文字）"];
+    if (c.urlChars) parts.push("入庫予約URL " + c.urlChars + "文字を含む");
+    detailEl.textContent = overLimit ? "" : "（" + parts.join(" ／ ") + "） " + price.toFixed(1) + "円/件";
+
+    if (overLimit) {
+      warnEl.innerHTML = '<div class="counter-error">660文字以内に調整してください（現在 ' + c.total + " 文字）</div>";
+    } else {
+      // 次の通数に上がる文字数のしきい値（ROUNDUP(x/66)がsegments+1になる最小のx）
+      var nextThreshold = segments === 1 ? 71 : segments * SEGMENT_STEP + 1;
+      var remainder = nextThreshold - c.total;
+      if (segments < MAX_SEGMENTS && remainder <= 5 && c.total > 0) {
+        warnEl.innerHTML = '<div class="counter-warn">あと' + remainder + "文字で" + (segments + 1) + "通になります（+" + PRICE_STEP.toFixed(0) + "円/件）</div>";
+      } else {
+        warnEl.innerHTML = "";
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------
+  // ③ 依頼文を出す
+  // ----------------------------------------------------------------
+  var SMS_TYPE_LABELS = { text: "テキスト", nyuko: "入庫連動", reminder: "リマインド" };
+
+  function renderRequestPanel() {
+    document.getElementById("reqWorkType").value = state.reqWorkType;
+    document.getElementById("reqStopState").value = state.reqStopState;
+    document.getElementById("reqTemplateName").value = state.reqTemplateName;
+    document.getElementById("reqUrlType").value = state.reqUrlType;
+    document.getElementById("reqWorkGroupName").value = state.reqWorkGroupName;
+    document.getElementById("reqStoreName").value = state.reqStoreName;
+    document.getElementById("reqNyukoFields").style.display = state.draftSmsType === "nyuko" ? "" : "none";
+    document.getElementById("reqSmsTypeDisplay").textContent = SMS_TYPE_LABELS[state.draftSmsType];
+
+    var c = countChars(state.draftText, state.draftSmsType);
+    var isReminder = state.draftSmsType === "reminder";
+    var segments = isReminder ? (c.total <= 70 ? 1 : 0) : countSegments(c.total);
+    var price = priceForSegments(segments);
+    document.getElementById("reqCountDisplay").textContent =
+      c.total + "文字 / " + (segments || "—") + "通 / " + price.toFixed(1) + "円";
+
+    document.getElementById("requestPreview").textContent = buildRequestText();
+  }
+
+  function buildRequestText() {
+    var c = countChars(state.draftText, state.draftSmsType);
+    var isReminder = state.draftSmsType === "reminder";
+    var segments = isReminder ? (c.total <= 70 ? 1 : 0) : countSegments(c.total);
+    var price = priceForSegments(segments);
+
+    var lines = [];
+    lines.push("【SMS配信文章設定のご依頼】");
+    lines.push("");
+    lines.push("■ 作業内容: " + state.reqWorkType);
+    lines.push("■ 停止状態: " + state.reqStopState);
+    lines.push("■ SMSの型: " + SMS_TYPE_LABELS[state.draftSmsType]);
+    lines.push("■ テンプレート名: " + (state.reqTemplateName || "（未入力）"));
+    if (state.draftSmsType === "nyuko") {
+      lines.push("■ URL種別: " + (state.reqUrlType || "（未入力）"));
+      lines.push("■ 作業グループ名: " + (state.reqWorkGroupName || "（未入力）"));
+      lines.push("■ 店舗名／工場名: " + (state.reqStoreName || "（未入力）"));
+    }
+    lines.push("");
+    lines.push("■ 文面（" + c.total + "文字 / " + (segments || "—") + "通 / " + price.toFixed(1) + "円）");
+    var bodyText = state.masked ? maskTextPlain(state.draftText) : state.draftText;
+    lines.push(bodyText || "（文章案が未入力です）");
+    if (state.draftSmsType === "nyuko") {
+      lines.push("（※入庫予約URL 36文字が末尾に自動挿入されます）");
+    }
+    lines.push("");
+    lines.push("■ 参考にした文例");
+    var trayTemplates = state.tray.map(function (id) { return TEMPLATES.filter(function (t) { return t.id === id; })[0]; }).filter(Boolean);
+    if (trayTemplates.length === 0) {
+      lines.push("（なし）");
+    } else {
+      trayTemplates.forEach(function (t) {
+        var name = t.templateName || bodyExcerpt(t.body, 16) + "（名称なし）";
+        lines.push("・" + name + "（" + t.sendCount.toLocaleString() + "通）");
+      });
+    }
+    return lines.join("\n");
+  }
+
+  // 依頼文プレビュー（プレーンテキスト）用のマスク。maskText はHTML断片を返すため別関数にする
+  function maskTextPlain(text) {
+    if (!text) return text;
+    var out = text;
+    STORE_NAME_PATTERNS.forEach(function (pat) {
+      out = out.replace(new RegExp(pat, "g"), function (m) { return "●".repeat(Math.max(4, m.length / 2)); });
+    });
+    out = out.replace(PHONE_REGEX, function (m) { return "0●●-●●●-●●●●".slice(0, m.length); });
+    out = out.replace(URL_REGEX, function () { return "https://●●●●●●●●●●●●●●●"; });
+    return out;
   }
 
   function renderDetail(id) {
@@ -1344,6 +1982,7 @@
     document.getElementById("cardList").addEventListener("click", function (e) {
       var detailBtn = e.target.closest(".detail-btn");
       var copyBtn = e.target.closest(".copy-btn");
+      var trayBtn = e.target.closest(".tray-btn");
       var card = e.target.closest(".card");
       if (!card) return;
       var id = Number(card.getAttribute("data-id"));
@@ -1352,10 +1991,68 @@
         if (t) copyToClipboard(t.body);
         return;
       }
+      if (trayBtn) {
+        addToTray(id);
+        return;
+      }
       // 詳細ボタン、またはカード本体クリックで詳細を開く
       state.selectedId = id;
       render();
       renderDetail(id);
+    });
+
+    // ステップナビ
+    document.getElementById("stepNav").addEventListener("click", function (e) {
+      var item = e.target.closest(".step-item");
+      if (!item) return;
+      state.step = item.getAttribute("data-step");
+      render();
+    });
+
+    // ② 文章案をつくる
+    document.getElementById("draftSmsTypeTabs").addEventListener("click", function (e) {
+      var tab = e.target.closest(".sms-type-tab");
+      if (!tab) return;
+      state.draftSmsType = tab.getAttribute("data-type");
+      renderDraftPanel();
+    });
+    document.getElementById("draftTextarea").addEventListener("input", function (e) {
+      state.draftText = e.target.value;
+      renderCounter();
+    });
+    document.getElementById("trayList").addEventListener("click", function (e) {
+      var insertBtn = e.target.closest(".insert-body-btn");
+      var removeBtn = e.target.closest(".remove-tray-btn");
+      if (insertBtn) {
+        insertBodyIntoDraft(Number(insertBtn.getAttribute("data-id")));
+      } else if (removeBtn) {
+        removeFromTray(Number(removeBtn.getAttribute("data-id")));
+      }
+    });
+    document.getElementById("replaceVarRow").addEventListener("click", function (e) {
+      var btn = e.target.closest(".replace-var-btn");
+      if (!btn) return;
+      var ta = document.getElementById("draftTextarea");
+      state.draftText += btn.getAttribute("data-token");
+      ta.value = state.draftText;
+      renderCounter();
+    });
+
+    // ③ 依頼文を出す
+    ["reqWorkType", "reqStopState"].forEach(function (id) {
+      document.getElementById(id).addEventListener("change", function (e) {
+        state[id] = e.target.value;
+        renderRequestPanel();
+      });
+    });
+    ["reqTemplateName", "reqUrlType", "reqWorkGroupName", "reqStoreName"].forEach(function (id) {
+      document.getElementById(id).addEventListener("input", function (e) {
+        state[id] = e.target.value;
+        renderRequestPanel();
+      });
+    });
+    document.getElementById("copyRequestBtn").addEventListener("click", function () {
+      copyToClipboard(buildRequestText());
     });
   }
 
