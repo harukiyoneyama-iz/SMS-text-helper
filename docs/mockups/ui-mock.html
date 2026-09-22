@@ -2720,6 +2720,15 @@
     return out;
   }
 
+  // 詳細パネルの「設定内容」表でURLをクリックして遷移できるようにする。
+  // 伏せモード中はマスクした見た目のまま（実URLが分からないので飛べない状態が正しい）にする
+  function urlCellHtml(url) {
+    if (!url) return "—";
+    if (state.masked) return "https://●●●●●●●●●●";
+    var safeHref = esc(url);
+    return '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer">' + safeHref + "</a>";
+  }
+
   function renderDetail(id) {
     var t = findTemplateById(id);
     if (!t) return;
@@ -2730,8 +2739,8 @@
 
     var settingsRows = [
       ["差込む電話番号", t.reservedTel ? (state.masked ? "●●●-●●●●-●●●●" : esc(t.reservedTel)) : "—"],
-      ["差込むURL", t.reservedUrl ? (state.masked ? "https://●●●●●●●●●●" : esc(t.reservedUrl)) : "—"],
-      ["入庫予約用URL", t.nykReservedUrl ? (state.masked ? "https://●●●●●●●●●●" : esc(t.nykReservedUrl)) : "—"],
+      ["差込むURL", urlCellHtml(t.reservedUrl)],
+      ["入庫予約用URL", urlCellHtml(t.nykReservedUrl)],
       ["配信の種類", esc(t.deliveryType)],
       ["予約済みを除く", t.excludeReserved ? "はい" : "いいえ"],
       ["コールリスト登録者のみ", t.callListOnly ? "はい" : "いいえ"],
