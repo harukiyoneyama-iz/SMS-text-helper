@@ -321,21 +321,17 @@
   }
   .pick-box {
     flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    border: 2px solid #a0aec0;
-    border-radius: 4px;
-    margin-top: 2px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #fff;
-    background: #fff;
+    margin-top: 2px;
+    padding: 2px;
+    cursor: pointer;
   }
-  .card.picked .pick-box {
-    background: var(--pick-border);
-    border-color: var(--pick-border);
+  .pick-box .pick-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--pick-border);
   }
   .card-title {
     font-weight: bold;
@@ -458,6 +454,18 @@
     font-size: 11.5px;
     color: var(--text-sub);
     margin-top: 2px;
+  }
+  .auto-name-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: normal;
+    font-style: normal;
+    color: var(--text-sub);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 0 6px;
+    margin-left: 5px;
+    vertical-align: middle;
   }
   .card-actions {
     display: flex;
@@ -922,15 +930,17 @@
       <select id="filterStage"></select>
     </div>
 
+    <!--
+      「使用中の文例だけ表示する」（システム上の status = 使用中/停止 での絞り込み）は
+      廃止した。実データでは status を取得できず「不明」のままなので絞り込みが機能しない上、
+      下の「使用中止も表示する」（テンプレート名の【使用不可】判定）と役割が重複するため、
+      こちらのトグル1つで代替する（2026-09-22 ユーザー指摘）。
+    -->
     <div class="filter-section-label">表示に含める</div>
     <div class="filter-group">
       <div class="checkbox-row">
-        <input type="checkbox" id="filterActiveOnly">
-        <label for="filterActiveOnly">使用中の文例だけ表示する</label>
-      </div>
-      <div class="checkbox-row">
         <input type="checkbox" id="filterIncludeRetired">
-        <label for="filterIncludeRetired">過去の文面（【使用不可】）も表示する</label>
+        <label for="filterIncludeRetired">使用中止の文面（【使用不可】）も表示する</label>
       </div>
       <div class="checkbox-row">
         <input type="checkbox" id="filterIncludePersonal">
@@ -1552,7 +1562,7 @@
       created: "2026-08-01", modified: "2026-08-01",
       isTest: false, hasPlatelike: false, isPersonal: true
     },
-    // --- 過去版（【使用不可】＝現役を退いた文面。除外ではなく現役/過去の状態区分） ---
+    // --- 使用中止版（【使用不可】＝現在は使われていない文面。除外ではなく使用中/使用中止の状態区分） ---
     {
       id: 40, templateName: "【使用不可】車検5ヶ月前案内（旧割引額）", company: "株式会社サンライズオート", clientId: 1001,
       franchise: "車検のコバック", scene: "車検誘致", timing: "5ヶ月前", smsType: "テキスト",
@@ -1860,7 +1870,6 @@
     smsType: "",
     customerType: "",
     stage: "",
-    activeOnly: false,
     includeRetired: false,
     includePersonal: false,
     includeTest: false,
@@ -1931,7 +1940,9 @@
     }
     var scenePrefix = t.scene ? t.scene + "｜" : "";
     var raw = scenePrefix + bodyExcerpt(t.body, len);
-    return renderBody(raw, state.masked) + esc(fallbackSuffix);
+    // fallbackSuffix はテキストではなくバッジにする。本文から自動で作った見出しであって
+    // システム上のテンプレート名として保存されたものではないことを、常に一目で分かるようにする
+    return renderBody(raw, state.masked) + '<span class="auto-name-badge">' + esc(fallbackSuffix) + "</span>";
   }
 
   function visibleTemplates() {
@@ -1958,7 +1969,6 @@
       if (state.smsType && t.smsType !== state.smsType) return false;
       if (state.customerType && t.customerType !== state.customerType) return false;
       if (state.stage && t.stage !== state.stage) return false;
-      if (state.activeOnly && t.status !== "使用中") return false;
       if (kw) {
         var hay = ((t.templateName || "") + " " + t.body).toLowerCase();
         if (hay.indexOf(kw) === -1) return false;
@@ -2178,7 +2188,7 @@
   function cardHtml(t) {
     var picked = state.tray.indexOf(t.id) !== -1;
     var titleClass = t.templateName ? "card-title" : "card-title fallback";
-    var titleHtml = renderTitleWithFallback(t, 18, "（テンプレート名なし）");
+    var titleHtml = renderTitleWithFallback(t, 18, "自動生成・未保存");
     var companyClass = t.company ? "card-company" : "card-company fallback-id";
     var companyText = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
     var statusClass = t.status === "使用中" ? "status-active" : "status-stopped";
@@ -2190,7 +2200,7 @@
     tags.push('<span class="mini-tag">' + esc(t.smsType) + "</span>");
     if (t.customerType) tags.push('<span class="mini-tag">' + esc(t.customerType) + "</span>");
     if (t.stage) tags.push('<span class="mini-tag">' + esc(t.stage) + "</span>");
-    if (t.lifecycle === "retired") tags.push('<span class="mini-tag retired">過去の文面</span>');
+    if (t.lifecycle === "retired") tags.push('<span class="mini-tag retired">使用中止</span>');
     if (t.isPersonal) tags.push('<span class="mini-tag personal">個人宛</span>');
     if (t.isTest) tags.push('<span class="mini-tag warn">テスト用</span>');
 
@@ -2198,7 +2208,9 @@
       '<div class="card' + (picked ? " picked" : "") + '" data-id="' + t.id + '">' +
       '<div class="card-top">' +
       '<div class="card-top-left">' +
-      '<div class="pick-box">' + (picked ? "✓" : "") + "</div>" +
+      '<label class="pick-box" title="文章案として選ぶ">' +
+      '<input type="checkbox" class="pick-checkbox" data-id="' + t.id + '"' + (picked ? " checked" : "") + '>' +
+      "</label>" +
       "<div>" +
       '<p class="' + titleClass + '">' + titleHtml + "</p>" +
       '<p class="' + companyClass + '">' + companyText + "</p>" +
@@ -2212,9 +2224,6 @@
       '<div class="card-tags">' + tags.join("") + "</div>" +
       '<div class="card-body-excerpt">' + renderBody(bodyExcerpt(t.body, 70), state.masked) + "</div>" +
       '<div class="store-variant-wrap">' + storeVariantSectionHtml(t) + "</div>" +
-      '<div class="card-actions">' +
-      '<button class="btn detail-btn" data-id="' + t.id + '">詳細</button>' +
-      "</div>" +
       "</div>"
     );
   }
@@ -2267,7 +2276,6 @@
     document.getElementById("filterType").value = state.smsType;
     document.getElementById("filterCustomerType").value = state.customerType;
     document.getElementById("filterStage").value = state.stage;
-    document.getElementById("filterActiveOnly").checked = state.activeOnly;
     document.getElementById("filterIncludeRetired").checked = state.includeRetired;
     document.getElementById("filterIncludePersonal").checked = state.includePersonal;
     document.getElementById("filterIncludeTest").checked = state.includeTest;
@@ -2421,7 +2429,7 @@
   }
 
   function trayItemHtml(t) {
-    var nameHtml = renderTitleWithFallback(t, 16, "（名称なし）");
+    var nameHtml = renderTitleWithFallback(t, 16, "自動生成・未保存");
     var company = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
     return (
       '<div class="tray-item" data-id="' + t.id + '">' +
@@ -2671,7 +2679,7 @@
     var t = findTemplateById(id);
     if (!t) return;
     var overlay = document.getElementById("detailOverlay");
-    var titleHtml = renderTitleWithFallback(t, 999, "（テンプレート名なし）");
+    var titleHtml = renderTitleWithFallback(t, 999, "自動生成・未保存");
     var company = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
     var picked = state.tray.indexOf(t.id) !== -1;
 
@@ -2689,7 +2697,7 @@
       ["アプローチ段階", t.stage ? esc(t.stage) : "—"],
       ["エリア", t.area ? esc(t.area) : "—"],
       ["店舗", t.storeName ? maskCompany(t.storeName) : "—"],
-      ["状態区分（現役／過去）", t.lifecycle === "retired" ? "過去（【使用不可】等の名前で保存）" : "現役"]
+      ["文面の状態（使用中／使用中止）", t.lifecycle === "retired" ? "使用中止（【使用不可】等の名前で保存）" : "使用中"]
     ];
 
     var revisionHtml = "";
@@ -2697,7 +2705,7 @@
       var prev = findTemplateById(t.revisionOf);
       if (prev) {
         revisionHtml =
-          '<div class="detail-section"><h4>過去版</h4>' +
+          '<div class="detail-section"><h4>使用中止版</h4>' +
           '<div class="revision-box">' +
           '<div>' + renderBody(prev.templateName || "（名称なし）", state.masked) + '</div>' +
           '<div class="rev-body">' + renderBody(prev.body, state.masked) + '</div>' +
@@ -2708,14 +2716,20 @@
       if (next) {
         revisionHtml =
           '<div class="detail-section"><h4>この文面の現行版</h4>' +
-          '<div class="revision-box">この文面は過去版です。現行版は「' +
+          '<div class="revision-box">この文面は使用中止版です。現行版は「' +
           renderBody(next.templateName || bodyExcerpt(next.body, 20), state.masked) + '」です。</div></div>';
       }
     }
 
+    // 「出典」＝この文例をどこから見つけてきたか（Slackの投稿／実際の設定画面 等）のメモ。
+    // BigQuery連携前の実文例調査（materials/sms-corpus.md）で人が調べた記録なので、
+    // 見出しだけでは伝わりにくく、一言説明を必ず添える
     var sourceHtml = t.source
-      ? '<div class="detail-section"><h4>出典</h4><div style="font-size:12px;color:var(--text-sub);">' +
-        esc(t.source) + (t.corpusId ? "（" + esc(t.corpusId) + "）" : "") + "</div></div>"
+      ? '<div class="detail-section"><h4>この文例の入手元</h4>' +
+        '<div style="font-size:11px;color:var(--text-sub);margin-bottom:4px;">実文例調査（materials/sms-corpus.md）で、どこからこの文例を見つけたかのメモです</div>' +
+        '<div style="font-size:12px;color:var(--text-sub);">' + esc(t.source) + "</div>" +
+        (t.corpusId ? '<div style="font-size:11px;color:var(--text-sub);margin-top:4px;">資料内の番号: ' + esc(t.corpusId) + "</div>" : "") +
+        "</div>"
       : "";
 
     overlay.innerHTML =
@@ -2844,10 +2858,6 @@
       state.stage = e.target.value;
       render();
     });
-    document.getElementById("filterActiveOnly").addEventListener("change", function (e) {
-      state.activeOnly = e.target.checked;
-      render();
-    });
     document.getElementById("filterIncludeRetired").addEventListener("change", function (e) {
       state.includeRetired = e.target.checked;
       render();
@@ -2885,7 +2895,6 @@
       state.smsType = "";
       state.customerType = "";
       state.stage = "";
-      state.activeOnly = false;
       state.includeRetired = false;
       state.includePersonal = false;
       state.includeTest = false;
@@ -2895,8 +2904,16 @@
     });
     document.getElementById("overlayBackdrop").addEventListener("click", closeDetail);
 
+    // チェックボックスの変更だけがトレイ選択のオン/オフを行う（B1改訂：
+    // カード本体クリックは「詳細を見る」に用途を一本化し、選ぶ操作と分離した）
+    document.getElementById("cardList").addEventListener("change", function (e) {
+      var checkbox = e.target.closest(".pick-checkbox");
+      if (!checkbox) return;
+      toggleTray(checkbox.getAttribute("data-id"));
+    });
+
     document.getElementById("cardList").addEventListener("click", function (e) {
-      var detailBtn = e.target.closest(".detail-btn");
+      var checkboxLabel = e.target.closest(".pick-box");
       var expandBtn = e.target.closest(".expand-store-btn");
       var variantTable = e.target.closest(".store-variant-table");
       var card = e.target.closest(".card");
@@ -2908,16 +2925,14 @@
         render();
         return;
       }
-      if (detailBtn) {
-        state.selectedId = id;
-        render();
-        renderDetail(id);
-        return;
-      }
-      // 展開した店舗違いテーブルの文字を読みたいだけのクリックで選択が切り替わらないようにする
+      // チェックボックス自体のクリックは上の change ハンドラに任せる（ここで詳細を開かない）
+      if (checkboxLabel) return;
+      // 展開した店舗違いテーブルの文字を読みたいだけのクリックで詳細が開かないようにする
       if (variantTable) return;
-      // カード本体のどこを押しても選択のオン/オフ（B1）
-      toggleTray(id);
+      // カード本体のどこを押しても詳細パネルを開く
+      state.selectedId = id;
+      render();
+      renderDetail(id);
     });
 
     // ステップナビ
