@@ -2024,9 +2024,15 @@
     return arr;
   }
 
-  // 一覧・詳細で送信数を表示するときの共通フォーマット（null は「配信数不明」）
-  function sendCountLabel(t) {
-    return t.sendCount == null ? "配信数不明" : t.sendCount.toLocaleString() + "通";
+  // 一覧・詳細で送信数を表示するときの共通フォーマット（null は「配信数不明」）。
+  // sendCountIsDummy が立っている値は、BigQuery連携前のモックの目的のために入れた
+  // ダミー数字（実データではない）なので、必ず区別する（状態の嘘をなくす方針を維持）。
+  // plain=true はコピー用のプレーンテキスト向け（依頼文にHTMLタグを混ぜないため）
+  function sendCountLabel(t, plain) {
+    if (t.sendCount == null) return "配信数不明";
+    var num = t.sendCount.toLocaleString() + "通";
+    if (!t.sendCountIsDummy) return num;
+    return plain ? num + "（仮の数字）" : num + '<span class="auto-name-badge">仮の数字</span>';
   }
 
   // status（システム上の使用中/停止）のピル色分け。「不明」を「停止」と同じ灰色にすると
@@ -2696,7 +2702,7 @@
     } else {
       trayTemplates.forEach(function (t) {
         var name = t.templateName || bodyExcerpt(t.body, 16) + "（名称なし）";
-        lines.push("・" + name + "（" + sendCountLabel(t) + "）");
+        lines.push("・" + name + "（" + sendCountLabel(t, true) + "）");
       });
     }
     return lines.join("\n");
