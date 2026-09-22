@@ -371,8 +371,16 @@
   .status-active { background: var(--ok-bg); color: var(--ok-text); }
   .status-stopped { background: #edf2f7; color: #718096; }
   /* 「不明」＝実データ調査ではシステム上の使用中/停止が取得できなかった状態。
-     停止（灰色）と見た目が同じだと「停止している」と誤解されるため別配色にする */
+     停止（灰色）と見た目が同じだと「停止している」と誤解されるため別配色にする。
+     ただしノイズが多いとの指摘を受け、カード上では「不明」は表示自体をやめている
+     （filterIncludeRetired の「使用中止」タグの方が実務的に意味があるため） */
   .status-unknown { background: #fffaf0; color: #9c6f1a; border: 1px dashed #f0c674; }
+  .card-char-count {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 2px;
+    white-space: nowrap;
+  }
   .card-body-excerpt {
     font-size: 12.5px;
     color: var(--text);
@@ -1861,6 +1869,23 @@
     return "text";
   }
 
+  // 一覧カード・詳細パネルで「この文例は何文字/何通か」を出すための共通計算。
+  // ②の文章案と同じ数式（countChars/countSegments）を使い、SMSの型ごとの違いも反映する
+  function bodyCharInfo(t) {
+    var mt = mappedType(t);
+    var c = countChars(t.body, mt);
+    var isReminder = mt === "reminder";
+    var overLimit = !isReminder && c.total > MAX_CHARS;
+    var overReminder = isReminder && c.total > 70;
+    var segments = overLimit ? 0 : (isReminder ? (overReminder ? 0 : 1) : countSegments(c.total));
+    return { total: c.total, segments: segments, overLimit: overLimit || overReminder };
+  }
+
+  function bodyCharLabel(t) {
+    var info = bodyCharInfo(t);
+    return info.total + "文字" + (info.segments ? "・" + info.segments + "通" : info.overLimit ? "（上限超過）" : "");
+  }
+
   // ----------------------------------------------------------------
   // 状態
   // ----------------------------------------------------------------
@@ -2229,7 +2254,10 @@
       "</div>" +
       '<div class="card-stats">' +
       '<div class="send-count">' + sendCountLabel(t) + "</div>" +
-      '<span class="status-pill ' + statusClass + '">' + esc(t.status) + "</span>" +
+      // 状態「不明」は紛らわしいという指摘を受け、システム状態が分かる時だけピルを出す。
+      // 「使用中止」の意味は下のタグ（テンプレート名判定）でまかなえている
+      (t.status !== "不明" ? '<span class="status-pill ' + statusClass + '">' + esc(t.status) + "</span>" : "") +
+      '<div class="card-char-count">' + bodyCharLabel(t) + "</div>" +
       "</div>" +
       "</div>" +
       '<div class="card-tags">' + tags.join("") + "</div>" +
@@ -2755,6 +2783,8 @@
       '<div class="detail-section">' +
       "<h4>本文</h4>" +
       '<div class="full-body-text">' + renderBody(t.body, state.masked) + "</div>" +
+      '<div class="char-count-sub" style="margin-top:6px;">' + bodyCharLabel(t) +
+      "（②の文章案と同じ数式。" + esc(t.smsType) + "としての計算）</div>" +
       '<div class="card-actions" style="margin-top:8px;">' +
       '<button class="btn" id="copyFullBtn">この文面だけコピー</button>' +
       '<button class="btn primary" id="toggleTrayBtn">' + (picked ? "✓ 選択済み（解除）" : "＋ 文章案に追加") + '</button>' +
