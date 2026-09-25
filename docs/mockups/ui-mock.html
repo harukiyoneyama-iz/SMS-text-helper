@@ -71,14 +71,53 @@
     font-size: 12px;
     color: var(--text-sub);
   }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  /* 表示トグル（伏せモード・推しポイント）は常時見える場所には置かず、歯車を開いた
+     ときだけ出す（2026-09-25 ユーザー指摘）。歯車が複数並ぶと煩わしいので、
+     ヘッダーのこの1つに全部まとめる */
+  .settings-disclosure {
+    position: relative;
+  }
+  .settings-disclosure-summary {
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    color: var(--text-sub);
+    list-style: none;
+    user-select: none;
+    padding: 2px;
+  }
+  .settings-disclosure-summary::-webkit-details-marker { display: none; }
+  /* パネルはヘッダーの高さを押し広げないよう、浮かせて重ねる */
+  .settings-disclosure-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 20;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .12);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    white-space: nowrap;
+  }
   .mask-toggle-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
   }
   .mask-toggle-label {
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 11px;
+    color: var(--text-sub);
   }
   .switch {
     position: relative;
@@ -105,6 +144,10 @@
   }
   input:checked + .slider { background-color: #d69e2e; }
   input:checked + .slider::before { transform: translateX(20px); }
+  /* 目立たせたくないトグル用の縮小版（伏せモード・推しポイント表示で共用） */
+  .switch-sm { width: 30px; height: 16px; }
+  .switch-sm .slider::before { height: 10px; width: 10px; left: 3px; bottom: 3px; }
+  .switch-sm input:checked + .slider::before { transform: translateX(14px); }
 
   /* ステップナビ */
   .step-nav {
@@ -185,14 +228,14 @@
 
   main {
     display: flex;
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
-    gap: 16px;
+    gap: 20px;
     padding: 16px 20px 60px;
     align-items: flex-start;
   }
   .sidebar {
-    width: 260px;
+    width: 240px;
     flex-shrink: 0;
     background: var(--panel);
     border: 1px solid var(--border);
@@ -200,9 +243,14 @@
     padding: 14px;
     position: sticky;
     top: 78px;
+    /* アコーディオンを展開すると縦に伸び、ビューポートより高くなることがある。
+       上限を付けて内部スクロールに閉じ込めないと、サイドバー上ではページ本体が
+       スクロールできなくなる（sticky要素自体はスクロール機構を持たないため） */
+    max-height: calc(100vh - 78px - 16px);
+    overflow-y: auto;
   }
   .sidebar h2 {
-    font-size: 13px;
+    font-size: 12px;
     margin: 0 0 8px;
     color: var(--text-sub);
   }
@@ -212,7 +260,6 @@
   .filter-group label.field-label {
     display: block;
     font-size: 12px;
-    font-weight: bold;
     margin-bottom: 4px;
     color: var(--text-sub);
   }
@@ -232,60 +279,113 @@
     margin-bottom: 6px;
     font-size: 12px;
   }
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .checkbox-group label.zero-count {
+    opacity: .5;
+  }
+  .checkbox-group .count {
+    color: var(--text-sub);
+    font-size: 11px;
+  }
+  .filter-more {
+    margin: 14px 0 6px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .filter-more summary {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-sub);
+    cursor: pointer;
+    margin-bottom: 8px;
+  }
+  .filter-more[open] summary { margin-bottom: 12px; }
+  .filter-more .filter-group:last-child { margin-bottom: 4px; }
   .content-area {
     flex: 1;
     min-width: 0;
   }
-  .search-bar {
+  .search-panel {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 12px 14px;
     margin-bottom: 12px;
+  }
+  .search-bar {
     display: flex;
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
   }
-  .search-bar input[type="text"] { flex: 1; min-width: 200px; }
-  .sort-select { width: auto; min-width: 180px; }
-
-  .tag-chip-row {
+  .search-bar input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+  /* ★プランナー推薦バッジ・💡型の解説の表示/非表示トグル（2026-09-25 ユーザー要望）。
+     両方とも annotations 由来の「人の知見」なので、1つのトグルでまとめて出し分ける。
+     伏せモードと合わせて、ヘッダーの歯車（settings-disclosure）1つにまとめて隠す
+     （2026-09-25 ユーザー指摘：歯車を複数並べると煩わしい） */
+  .insight-toggle-wrap {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 14px;
-  }
-  .tag-chip {
-    background: var(--chip-bg);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 4px 12px;
-    font-size: 12px;
-    cursor: pointer;
-    color: var(--text);
-    display: inline-flex;
     align-items: center;
-    gap: 4px;
+    justify-content: space-between;
+    gap: 10px;
+    cursor: pointer;
   }
-  .tag-chip .count {
+  .insight-toggle-label {
+    font-size: 11px;
     color: var(--text-sub);
-    font-weight: bold;
+    white-space: nowrap;
   }
-  .tag-chip.active {
-    background: var(--chip-active-bg);
-    color: var(--chip-active-text);
-    border-color: var(--chip-active-bg);
-  }
-  .tag-chip.active .count { color: #e2e8f0; }
-  .tag-chip.uncategorized {
-    border-style: dashed;
-  }
-
   .result-meta {
     font-size: 12px;
     color: var(--text-sub);
     margin-bottom: 8px;
+  }
+  .result-meta-main {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .result-meta-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-chip {
+    background: var(--chip-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .filter-chip .x { font-weight: bold; }
+  .result-meta-chips .reset-link {
+    font-size: 11.5px;
+    color: var(--text-sub);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 4px;
   }
 
   .card-list {
@@ -381,12 +481,22 @@
     margin-top: 2px;
     white-space: nowrap;
   }
-  .card-body-excerpt {
+  .card-body-full {
     font-size: 12.5px;
     color: var(--text);
     margin: 8px 0;
     line-height: 1.5;
     white-space: pre-wrap;
+  }
+  .card-insight {
+    font-size: 12px;
+    color: var(--text-sub);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin: -2px 0 8px;
+    line-height: 1.5;
   }
   .mask-span {
     background: var(--mask-bg);
@@ -423,6 +533,25 @@
     color: #9c4221;
     border: 1px solid #fbd38d;
   }
+  .mini-tag.recommend {
+    background: #fefcbf;
+    color: #744210;
+    border: 1px solid #f6e05e;
+    font-weight: bold;
+  }
+  .mini-tag.clickable {
+    cursor: pointer;
+  }
+  .mini-tag.clickable.active {
+    background: var(--chip-active-bg);
+    color: var(--chip-active-text);
+  }
+  mark.kw-hit {
+    background: #fefcbf;
+    color: inherit;
+    padding: 0;
+    border-radius: 2px;
+  }
   .store-variant-badge {
     font-size: 11px;
     color: var(--accent);
@@ -445,9 +574,6 @@
     text-align: left;
   }
   .store-variant-table th { background: var(--bg); color: var(--text-sub); }
-  .tag-chip.zero {
-    opacity: .55;
-  }
   .revision-box {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -602,6 +728,10 @@
     flex: 1;
     min-width: 320px;
   }
+  /* 文章案（右カラム）を左より広くする（2026-09-24 MTG「編集エリアをもっと広く」） */
+  .panel-col.panel-col-wide {
+    flex: 1.8;
+  }
   .panel-box {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -705,7 +835,7 @@
 
   textarea.draft-textarea {
     width: 100%;
-    min-height: 160px;
+    min-height: 360px;
     padding: 10px;
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -858,7 +988,7 @@
 
   @media (max-width: 860px) {
     main { flex-direction: column; }
-    .sidebar { width: 100%; position: static; }
+    .sidebar { width: 100%; position: static; max-height: none; overflow-y: visible; }
     .panel-columns { flex-direction: column; }
     .bottom-bar { flex-direction: column; gap: 8px; align-items: stretch; text-align: center; }
   }
@@ -872,13 +1002,30 @@
       <h1>SMS文例検索ツール</h1>
       <span class="badge-mock" id="dataModeBadge">画面モックアップ（ダミーデータ）</span>
     </div>
-    <div class="mask-toggle-wrap">
+    <div class="header-actions">
       <span class="updated-at" id="updatedAt"></span>
-      <span class="mask-toggle-label">伏せモード</span>
-      <label class="switch">
-        <input type="checkbox" id="maskToggle">
-        <span class="slider"></span>
-      </label>
+      <!-- 常時見える場所に置かず、歯車を開かないと出てこない設定として隠す
+           （2026-09-25 ユーザー指摘：そもそも見える場所に置かなくて良い） -->
+      <details class="settings-disclosure">
+        <summary class="settings-disclosure-summary" title="表示設定">⚙</summary>
+        <div class="settings-disclosure-panel">
+          <label class="mask-toggle-wrap">
+            <span class="mask-toggle-label">伏せモード</span>
+            <span class="switch switch-sm">
+              <input type="checkbox" id="maskToggle">
+              <span class="slider"></span>
+            </span>
+          </label>
+          <!-- ①文例をさがすのカードにのみ効くが、まとめて1つの歯車に収める -->
+          <label class="insight-toggle-wrap">
+            <span class="insight-toggle-label">推しポイントを表示</span>
+            <span class="switch switch-sm">
+              <input type="checkbox" id="insightToggle" checked>
+              <span class="slider"></span>
+            </span>
+          </label>
+        </div>
+      </details>
     </div>
   </div>
   <div class="step-nav" id="stepNav">
@@ -907,39 +1054,55 @@
 <main id="stepPanelSearch">
   <aside class="sidebar">
     <h2>絞り込み</h2>
+    <!--
+      2026-09-24 MTGレビューで「プルダウンではなくチェックボックスで掛け合わせて
+      検索したい」という要望を受け、絞り込みは全軸チェックボックスに統一した
+      （楽天トラベルのホテル予約のような、条件を足していく検索）。
+      商材／SMSの型／顧客区分は使用頻度が高いため常時表示、目的は補助的な軸として
+      折りたたみに入れる（商材とセットで見せると視線が割れるため）。
+    -->
     <div class="filter-group">
-      <label class="field-label">クライアント</label>
-      <select id="filterClient"></select>
-    </div>
-    <div class="filter-group">
-      <label class="field-label">フランチャイズ</label>
-      <select id="filterFranchise"></select>
-    </div>
-    <div class="filter-group">
-      <label class="field-label">利用シーン</label>
-      <select id="filterScene"></select>
-    </div>
-    <div class="filter-group">
-      <label class="field-label">車検・点検 何ヶ月前</label>
-      <select id="filterTiming"></select>
+      <label class="field-label">商材</label>
+      <div class="checkbox-group" id="productChecks"></div>
     </div>
     <div class="filter-group">
       <label class="field-label">SMSの型</label>
-      <select id="filterType">
-        <option value="">すべて</option>
-        <option value="入庫連動">入庫連動</option>
-        <option value="テキスト">テキスト</option>
-        <option value="リマインド">リマインド</option>
-      </select>
+      <div class="checkbox-group" id="smsTypeChecks"></div>
     </div>
     <div class="filter-group">
       <label class="field-label">顧客区分</label>
-      <select id="filterCustomerType"></select>
+      <div class="checkbox-group" id="customerSegmentChecks"></div>
     </div>
     <div class="filter-group">
-      <label class="field-label">アプローチ段階</label>
-      <select id="filterStage"></select>
+      <!-- 予算感からも探せるように、料金の通数刻み（1通25円〜）を文字数の目安つきで絞り込める
+           ようにする（2026-09-25 ユーザー要望）。表示は「①の文章案と同じ数式」で計算した値 -->
+      <label class="field-label">金額</label>
+      <div class="checkbox-group" id="priceChecks"></div>
     </div>
+
+    <details class="filter-more" id="filterMorePurpose">
+      <summary>目的でも絞り込む</summary>
+      <!--
+        「車検」で検索したら誘致も御礼も全部出てほしい（サンドウさん）が、
+        商材と行動がクロスして分かりにくいケースもある（米山さん）という指摘の両立策。
+        商材を未選択のまま目的だけ足すこともできる
+      -->
+      <div class="filter-group">
+        <div class="checkbox-group" id="purposeChecks"></div>
+      </div>
+    </details>
+
+    <details class="filter-more" id="filterMoreConditions">
+      <summary>さらに絞り込む</summary>
+      <div class="filter-group">
+        <label class="field-label">フランチャイズ</label>
+        <div class="checkbox-group" id="franchiseChecks"></div>
+      </div>
+      <div class="filter-group">
+        <label class="field-label">アプローチ段階</label>
+        <div class="checkbox-group" id="stageChecks"></div>
+      </div>
+    </details>
 
     <!--
       「使用中の文例だけ表示する」（システム上の status = 使用中/停止 での絞り込み）は
@@ -947,49 +1110,49 @@
       下の「使用中止も表示する」（テンプレート名の【使用不可】判定）と役割が重複するため、
       こちらのトグル1つで代替する（2026-09-22 ユーザー指摘）。
     -->
-    <div class="filter-section-label">表示に含める</div>
-    <div class="filter-group">
-      <div class="checkbox-row">
-        <input type="checkbox" id="filterIncludeRetired">
-        <label for="filterIncludeRetired">使用中止の文面（【使用不可】）も表示する</label>
+    <details class="filter-more" id="filterMoreDisplay">
+      <summary>表示に含める・まとめ方</summary>
+      <div class="filter-section-label">表示に含める</div>
+      <div class="filter-group">
+        <div class="checkbox-row">
+          <input type="checkbox" id="filterIncludeRetired">
+          <label for="filterIncludeRetired">使用中止の文面（【使用不可】）も表示する</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="filterIncludePersonal">
+          <label for="filterIncludePersonal">個人宛の文例も表示する</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="filterIncludeTest">
+          <label for="filterIncludeTest">テスト用の文例も表示する</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="filterIncludePlatelike">
+          <label for="filterIncludePlatelike">車のナンバーが書かれた文例も表示する</label>
+        </div>
       </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="filterIncludePersonal">
-        <label for="filterIncludePersonal">個人宛の文例も表示する</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="filterIncludeTest">
-        <label for="filterIncludeTest">テスト用の文例も表示する</label>
-      </div>
-      <div class="checkbox-row">
-        <input type="checkbox" id="filterIncludePlatelike">
-        <label for="filterIncludePlatelike">車のナンバーが書かれた文例も表示する</label>
-      </div>
-    </div>
 
-    <div class="filter-section-label">表示のまとめ方</div>
-    <div class="filter-group">
-      <div class="checkbox-row">
-        <input type="checkbox" id="filterConsolidateStores" checked>
-        <label for="filterConsolidateStores">店舗違いをまとめる</label>
+      <div class="filter-section-label">表示のまとめ方</div>
+      <div class="filter-group">
+        <div class="checkbox-row">
+          <input type="checkbox" id="filterConsolidateStores" checked>
+          <label for="filterConsolidateStores">店舗違いをまとめる</label>
+        </div>
       </div>
-    </div>
-
-    <button class="btn" id="resetFilters" style="width:100%;">絞り込みをリセット</button>
+    </details>
   </aside>
 
   <div class="content-area">
-    <div class="search-bar">
-      <input type="text" id="keyword" placeholder="キーワード検索（本文・テンプレート名）">
-      <select class="sort-select" id="sortOrder">
-        <option value="send_count_desc">よく送られている順</option>
-        <option value="modified_desc">新しい順</option>
-      </select>
+    <div class="search-panel">
+      <div class="search-bar">
+        <input type="text" id="keyword" placeholder="🔍 キーワード検索（本文・企業名・タグ）">
+      </div>
     </div>
 
-    <div class="tag-chip-row" id="sceneChips"></div>
-
-    <div class="result-meta" id="resultMeta"></div>
+    <div class="result-meta" id="resultMeta">
+      <div class="result-meta-main" id="resultMetaMain"></div>
+      <div class="result-meta-chips" id="resultMetaChips"></div>
+    </div>
 
     <div class="card-list" id="cardList"></div>
     <div class="empty-state" id="emptyState" style="display:none;">
@@ -1018,7 +1181,7 @@
       </div>
     </div>
 
-    <div class="panel-col">
+    <div class="panel-col panel-col-wide">
       <div class="panel-box">
         <h3>文章案</h3>
         <div id="replaceVarRow" class="replace-var-row" style="display:none;"></div>
@@ -1670,17 +1833,70 @@
   // ダミーデータ側の revisionOf は各テンプレートの id フィールドに直接書く（46 → 47 の後継、
   // 8 → 41 の後継。id:8「タイヤ交換キャンペーン」・id:46「6・7月満期の方へ」自体の定義を参照）。
 
-  var SCENES = [
-    "車検誘致", "車検お礼", "車検証準備", "12ヶ月点検", "6ヶ月点検", "18ヶ月点検", "3ヶ月点検",
-    "オイル交換", "タイヤ", "コーティング", "車販・乗り換え", "キャンペーン・セール",
-    "長期休暇案内", "LINE・アプリ誘導", "予約リマインド", "お知らせ"
-  ];
-  var TIMINGS = [
-    "前日", "当月", "1ヶ月前", "2ヶ月前", "3ヶ月前", "4ヶ月前", "5ヶ月前", "7ヶ月前",
-    "満了後1ヶ月", "車検後3ヶ月"
-  ];
-  var CUSTOMER_TYPES = ["コバックリピート", "販売リピート", "コバック新規", "販売新規", "パック", "リース", "マイカーリース"];
+  // テンプレート本体とは別レイヤーの「人の知見」。BigQuery連携でテンプレート側が
+  // 日次で置き換わっても、annotations は id で引き直せば残る（materials/corpus-dataset.js の
+  // 実データ側にも同じ形の annotations を持たせる想定）。
+  // insight: この文面の型・狙い（実データでは source の括弧書きに畳み込まれていたものを分離）
+  // recommendedBy / recommendedAt: 「誰が推したか」は insight とは別軸として持つ
+  var DUMMY_ANNOTATIONS = {
+    "1": { insight: "", recommendedBy: "サンドウさん", recommendedAt: "2026-09-09" },
+    "5": { insight: "即日対応を前面に出し、来店のハードルを下げる型。滞留期の掘り起こしに強い", recommendedBy: "", recommendedAt: "" },
+    "8": { insight: "冬タイヤへの季節履き替え訴求。同じ「タイヤ」でも id33 は点検訴求で狙いが異なる（シーン分類だけでは区別できない例）", recommendedBy: "", recommendedAt: "" },
+    "13": { insight: "", recommendedBy: "シュウヤさん", recommendedAt: "2026-09-16" },
+    "16": { insight: "前日リマインドは開封率が高いため、直前の1通に絞る型。持ち物案内と組み合わせると効果的", recommendedBy: "", recommendedAt: "" },
+    "18": { insight: "満了後、反応が無かった相手への再送。他クライアントには無い型", recommendedBy: "", recommendedAt: "" },
+    "24": { insight: "", recommendedBy: "シュウヤさん", recommendedAt: "2026-09-16" },
+    "27": { insight: "「〇月〇日まで」と期限を切りつつ感謝の文脈で送る。二重条件で混雑を分散する型", recommendedBy: "", recommendedAt: "" },
+    "33": { insight: "「タイヤ」シーンの中でも季節の履き替えではなく点検訴求に絞った型", recommendedBy: "", recommendedAt: "" },
+    "43": { insight: "1通ずつ短くして料金を抑えつつ2回接触する設計の2通目", recommendedBy: "", recommendedAt: "" },
+    "46": { insight: "満期月を本文に直書きしており、満期月ごとにテンプレートを量産する運用の実例", recommendedBy: "", recommendedAt: "" }
+  };
+
   var APPROACH_STAGES = ["未予約", "仮予約済み", "WEB見積1巡後", "WEB見積3巡後", "2TEL3巡後"];
+
+  // scene は商材と目的（行動）が混在しているため、2軸に分解して持つ（2026-09-24 MTGレビュー）。
+  // 片方しか分からない scene（「オイル交換」＝商材のみ 等）は、分からない側を "" のままにして
+  // 「未設定」として正直に出す。推測で埋めない
+  var SCENE_AXES = {
+    "車検誘致":            { product: "車検", purpose: "誘致" },
+    "車検お礼":            { product: "車検", purpose: "御礼" },
+    "車検証準備":          { product: "車検", purpose: "準備依頼" },
+    "12ヶ月点検":          { product: "定期点検", purpose: "" },
+    "6ヶ月点検":           { product: "定期点検", purpose: "" },
+    "3ヶ月点検":           { product: "定期点検", purpose: "" },
+    "18ヶ月点検":          { product: "定期点検", purpose: "" },
+    "納車後1ヶ月点検":     { product: "定期点検", purpose: "" },
+    "オイル交換":          { product: "オイル交換", purpose: "" },
+    "タイヤ":              { product: "タイヤ", purpose: "" },
+    "洗車":                { product: "洗車", purpose: "" },
+    "コーティング":        { product: "コーティング", purpose: "" },
+    "車販・乗り換え":      { product: "車販・乗り換え", purpose: "" },
+    "予約リマインド":      { product: "", purpose: "リマインド" },
+    "キャンペーン・セール": { product: "", purpose: "キャンペーン・イベント" },
+    "長期休暇案内":        { product: "", purpose: "お知らせ" },
+    "お知らせ":            { product: "", purpose: "お知らせ" },
+    "LINE・アプリ誘導":    { product: "", purpose: "登録誘導" }
+  };
+  var PRODUCTS = ["車検", "定期点検", "オイル交換", "タイヤ", "洗車", "コーティング", "車販・乗り換え"];
+  var PURPOSES = ["誘致", "御礼", "準備依頼", "リマインド", "キャンペーン・イベント", "お知らせ", "登録誘導"];
+
+  function productForScene(scene) {
+    var axes = SCENE_AXES[scene];
+    return (axes && axes.product) || "";
+  }
+  function purposeForScene(scene) {
+    var axes = SCENE_AXES[scene];
+    return (axes && axes.purpose) || "";
+  }
+
+  // 顧客区分（コバックリピート等7値）はサイドバーで出すには細かすぎるため、
+  // 「新規／リピート」に粗く丸めた軸も別に持つ（2026-09-24 MTGでの要望）
+  function customerSegmentFor(customerType) {
+    if (!customerType) return "";
+    if (customerType.indexOf("リピート") !== -1) return "リピート";
+    if (customerType.indexOf("新規") !== -1) return "新規";
+    return "";
+  }
 
   // フランチャイズは車検系／車販系の2軸（運営企業＝会社名とは別軸）
   var FRANCHISE_GROUPS = [
@@ -1717,6 +1933,11 @@
   var USING_REAL_DATA = !!(window.SMS_CORPUS_DATASET && window.SMS_CORPUS_DATASET.templates && window.SMS_CORPUS_DATASET.templates.length);
   var CORPUS_DATASET = USING_REAL_DATA ? window.SMS_CORPUS_DATASET : null;
 
+  // リマインドは70文字制限・置換表の作り込みが必要なため②文章案タブでは一旦伏せる
+  // （2026-09-24 MTG。米山25:13「リマインド一回ちょっと伏せていていいですか」）。
+  // true に戻すだけで復活する。①の検索では引き続きリマインド型の文例を見られる
+  var REMINDER_ENABLED = false;
+
   // 【使用不可】※使用しない は名前の接頭・接尾から機械的に判定する（除外ではなく状態区分）
   function detectLifecycle(name) {
     if (!name) return "current";
@@ -1726,16 +1947,27 @@
     return "current";
   }
 
-  // テンプレート名が「○○様」のような人名一語だけの場合、個人宛の下書きとみなす
+  // テンプレート名の末尾が「○○様」の場合、個人宛の下書きとみなす。
+  // 2026-09-25 code-review 指摘: 以前は名前一語だけの完全一致（^...$）だったため、
+  // 「見積提示_鈴木様」のように前に接頭辞が付くだけで検知漏れし、ダミーデータでも
+  // 手動で isPersonal:true を上書きしないと拾えなかった（実データでの取りこぼしリスク）。
+  // 前方の接頭辞は許容しつつ、末尾が「○○様」（丸括弧閉じを伴う場合も含む）であることは
+  // 引き続き要求する形に緩め、「お客様」「皆様」のような文中の一般的な敬称語で
+  // 誤検知しないようにする（末尾以外に出現しても個人名とはみなさない）。
   function detectPersonal(name) {
     if (!name) return false;
-    return /^[一-龥ぁ-んァ-ヶA-Za-z]{1,6}様$/.test(name.trim());
+    return /[一-龥ぁ-んァ-ヶA-Za-z]{1,6}様[)）]?$/.test(name.trim());
   }
 
   // ダミー／実データのどちらでも同じ形に揃える（新フィールドの既定値埋め）。
   // id は文字列に統一する。実データは corpusId（"R-20" 等）を id として使う
   // （sms-corpus.md には machine-readable な template_id が無いため）。
-  function normalizeTemplates(list) {
+  //
+  // annotations はテンプレート本体とは別マップ（id → { insight, recommendedBy, recommendedAt }）。
+  // BigQuery連携で templates が日次で丸ごと置き換わっても、annotations 側は id で引き直せば
+  // 残る設計にしている（2026-09-23 ユーザー提案：型の解説・プランナー推薦を分離して残す）。
+  function normalizeTemplates(list, annotations) {
+    annotations = annotations || {};
     return list.map(function (t) {
       var name = t.templateName || "";
       var merged = Object.assign({
@@ -1747,11 +1979,21 @@
       }, t);
       merged.id = String(t.id != null ? t.id : t.corpusId);
       merged.revisionOf = t.revisionOf != null ? String(t.revisionOf) : null;
+      var ann = annotations[merged.id] || {};
+      merged.insight = ann.insight || "";
+      merged.recommendedBy = ann.recommendedBy || "";
+      merged.recommendedAt = ann.recommendedAt || "";
+      merged.product = productForScene(merged.scene);
+      merged.purpose = purposeForScene(merged.scene);
+      merged.customerSegment = customerSegmentFor(merged.customerType);
       return merged;
     });
   }
 
-  var TEMPLATES = normalizeTemplates(USING_REAL_DATA ? CORPUS_DATASET.templates : DUMMY_TEMPLATES);
+  var TEMPLATES = normalizeTemplates(
+    USING_REAL_DATA ? CORPUS_DATASET.templates : DUMMY_TEMPLATES,
+    USING_REAL_DATA ? (CORPUS_DATASET.annotations || {}) : DUMMY_ANNOTATIONS
+  );
 
   // 実データの伏せモード対象は corpus-dataset.js 側から供給される（ダミーの STORE_NAME_PATTERNS とは別物）
   var MASK_PATTERNS = USING_REAL_DATA && CORPUS_DATASET.storeNamePatterns
@@ -1886,25 +2128,55 @@
     return info.total + "文字" + (info.segments ? "・" + info.segments + "通" : info.overLimit ? "（上限超過）" : "");
   }
 
+  // カード一覧で金額を主役にするための表示（2026-09-24 MTG「文字数より金額」）。
+  // ②の文章案・bodyCharInfo と同じ計算式を再利用するので数式の二重管理にならない
+  function bodyPriceLabel(t) {
+    var info = bodyCharInfo(t);
+    if (info.overLimit || !info.segments) return "—";
+    return priceForSegments(info.segments).toFixed(0) + "円/件";
+  }
+
+  // 金額フィルタの1通あたり文字数レンジ。countSegments() は 70文字までを一律1通と
+  // 特別扱いしているため、2通目以降（SEGMENT_STEP=66単位）との境界がズレないよう
+  // 71文字からを2通目の下限にする
+  function segmentCharRange(segments) {
+    if (segments <= 1) return { min: null, max: 70 };
+    var min = Math.max((segments - 1) * SEGMENT_STEP + 1, 71);
+    return { min: min, max: segments * SEGMENT_STEP };
+  }
+
+  // 金額チェックボックスのラベル。「25円（〜70文字）」のように、①の一覧で使っているのと
+  // 同じ数式から算出した文字数レンジを添える（2026-09-25 ユーザー要望）
+  function priceTierLabel(segments) {
+    if (segments <= 0) return "— （" + MAX_CHARS + "文字超）";
+    var range = segmentCharRange(segments);
+    var rangeText = (range.min == null ? "〜" : range.min + "〜") + range.max + "文字";
+    return priceForSegments(segments).toFixed(0) + "円（" + rangeText + "）";
+  }
+
   // ----------------------------------------------------------------
   // 状態
   // ----------------------------------------------------------------
   var state = {
     keyword: "",
-    client: "",
-    franchise: "",
-    scene: "",
-    timing: "",
-    smsType: "",
-    customerType: "",
-    stage: "",
+    // 絞り込みは軸ごとに複数選択可能（掛け合わせ式。2026-09-24 MTGレビュー）。
+    // 軸の中は OR（配列内のいずれかに一致）、軸どうしは AND。空配列は無条件（絞り込みなし）
+    products: [],
+    smsTypes: [],
+    customerSegments: [],
+    purposes: [],
+    franchises: [],
+    stages: [],
+    scenes: [], // カードのタグクリックのみで操作（サイドバーUIなし）
+    timings: [], // 同上（サイドバーの「何ヶ月前」は廃止。2026-09-24 MTGで「商材にする」指摘）
+    priceTiers: [], // 金額（通数刻み）。値は bodyCharInfo(t).segments を文字列化したもの（上限超過は "0"）
     includeRetired: false,
     includePersonal: false,
     includeTest: false,
     includePlatelike: false,
+    showInsights: true, // ★プランナー推薦バッジ・💡型の解説をカードに出すか（表示切り替えのみ。絞り込みではない）
     consolidateStores: true,
     expandedStoreIds: [], // 「店舗違いをまとめる」表示で、カード内展開を開いているカードの id
-    sort: "send_count_desc",
     masked: false,
     selectedId: null,
     step: "search",
@@ -1983,44 +2255,54 @@
     });
   }
 
+  // 掛け合わせ式チェックボックスの判定。軸の中はOR（配列が空なら無条件）
+  function matchesAxis(selected, value) {
+    return selected.length === 0 || selected.indexOf(value) !== -1;
+  }
+
+  function sceneMatchesSelection(t) {
+    if (state.scenes.length === 0) return true;
+    return state.scenes.indexOf(t.scene ? t.scene : "__uncategorized__") !== -1;
+  }
+
   function filtered() {
     var kw = state.keyword.trim().toLowerCase();
     return visibleTemplates().filter(function (t) {
-      if (state.client && String(t.clientId) !== state.client) return false;
-      if (state.franchise && t.franchise !== state.franchise) return false;
-      if (state.scene) {
-        if (state.scene === "__uncategorized__") {
-          if (t.scene) return false;
-        } else if (t.scene !== state.scene) return false;
-      }
-      if (state.timing && t.timing !== state.timing) return false;
-      if (state.smsType && t.smsType !== state.smsType) return false;
-      if (state.customerType && t.customerType !== state.customerType) return false;
-      if (state.stage && t.stage !== state.stage) return false;
+      if (!matchesAxis(state.franchises, t.franchise)) return false;
+      if (!sceneMatchesSelection(t)) return false;
+      if (!matchesAxis(state.smsTypes, t.smsType)) return false;
+      if (!matchesAxis(state.customerSegments, t.customerSegment)) return false;
+      if (!matchesAxis(state.stages, t.stage)) return false;
+      if (!matchesAxis(state.products, t.product || "__unset__")) return false;
+      if (!matchesAxis(state.purposes, t.purpose || "__unset__")) return false;
+      if (!matchesAxis(state.timings, t.timing)) return false;
+      if (!matchesAxis(state.priceTiers, String(bodyCharInfo(t).segments))) return false;
       if (kw) {
-        var hay = ((t.templateName || "") + " " + t.body).toLowerCase();
+        // フリーワードは本文・テンプレート名・企業名・タグ類・商材・目的・型の解説・推薦者まで
+        // 対象にする（型の解説を検索対象にすることで「2段構え」等の知見からも辿れるようにする）
+        var hay = [
+          t.templateName || "", t.company || "", t.body,
+          t.scene || "", t.timing || "", t.franchise || "",
+          t.smsType || "", t.customerType || "", t.stage || "",
+          t.product || "", t.purpose || "",
+          t.insight || "", t.recommendedBy || ""
+        ].join(" ").toLowerCase();
         if (hay.indexOf(kw) === -1) return false;
       }
       return true;
     });
   }
 
-  // sendCount が無い実データ（配信数の列が設定画面に無かったクライアント）を
-  // 末尾に回す。null は -1 扱いにして比較する
-  function sendCountForSort(t) {
-    return t.sendCount == null ? -1 : t.sendCount;
-  }
-
+  // 並び替えは「新しい順」固定（2026-09-24 MTGで「よく送られている順」は不要と判断。
+  // 送信実数が無いダミー数字でのソートは誤解を招くため）。
+  // 基準はテンプレートを作った日付（created）。無ければ最終更新日（modified）で補う。
+  // 実データは大半が未取得のため空文字どうしは順不同になる（BigQuery連携後に効いてくる）
   function sorted(list) {
     var arr = list.slice();
-    if (state.sort === "send_count_desc") {
-      arr.sort(function (a, b) { return sendCountForSort(b) - sendCountForSort(a); });
-    } else if (state.sort === "modified_desc") {
-      arr.sort(function (a, b) {
-        var am = a.modified || "", bm = b.modified || "";
-        return am < bm ? 1 : (am > bm ? -1 : 0);
-      });
-    }
+    arr.sort(function (a, b) {
+      var ad = a.created || a.modified || "", bd = b.created || b.modified || "";
+      return ad < bd ? 1 : (ad > bd ? -1 : 0);
+    });
     return arr;
   }
 
@@ -2048,126 +2330,97 @@
     return oneLine.length > len ? oneLine.slice(0, len) + "…" : oneLine;
   }
 
+  // renderBody() 等の結果（エスケープ済み・伏せモードならマスク済みのHTML）に、後から
+  // 検索語のマークを入れる。タグ境界で分割し、タグでない部分だけを置換することで、
+  // 属性値や mask-span の中身を壊さない。検索語も esc() してから比較する
+  function highlightKeyword(html, kw) {
+    if (!kw) return html;
+    var re = new RegExp(escapeRegExp(esc(kw)), "gi");
+    return html.split(/(<[^>]*>)/).map(function (part) {
+      if (part.charAt(0) === "<") return part;
+      return part.replace(re, function (m) { return '<mark class="kw-hit">' + m + "</mark>"; });
+    }).join("");
+  }
+
   // ----------------------------------------------------------------
   // 描画（共通）
   // ----------------------------------------------------------------
-  function populateSelect(sel, values, allLabel) {
-    sel.innerHTML = "";
-    var optAll = document.createElement("option");
-    optAll.value = "";
-    optAll.textContent = allLabel;
-    sel.appendChild(optAll);
-    values.forEach(function (v) {
-      var opt = document.createElement("option");
-      opt.value = v.value;
-      opt.textContent = v.label;
-      sel.appendChild(opt);
-    });
-  }
+  // 絞り込みは全軸チェックボックス（掛け合わせ式）。コンテナID → state のキーの対応表。
+  // 件数は「表示に含める」設定だけを反映した母集団（visibleTemplates）に対して数える
+  // （他の軸の選択では母数を変えない。0件の選択肢も隠さず薄く出す既存方針を踏襲）
+  var CHECKBOX_GROUP_DEFS = [
+    { containerId: "productChecks", stateKey: "products", extractor: function (t) { return t.product || "__unset__"; }, values: PRODUCTS, unsetLabel: "未設定" },
+    { containerId: "smsTypeChecks", stateKey: "smsTypes", extractor: function (t) { return t.smsType; }, values: ["テキスト", "入庫連動", "リマインド"] },
+    { containerId: "customerSegmentChecks", stateKey: "customerSegments", extractor: function (t) { return t.customerSegment; }, values: ["新規", "リピート"] },
+    { containerId: "purposeChecks", stateKey: "purposes", extractor: function (t) { return t.purpose || "__unset__"; }, values: PURPOSES, unsetLabel: "未設定" },
+    { containerId: "stageChecks", stateKey: "stages", extractor: function (t) { return t.stage; }, values: APPROACH_STAGES }
+  ];
 
-  function populateFranchiseSelect() {
-    var sel = document.getElementById("filterFranchise");
-    sel.innerHTML = "";
-    var optAll = document.createElement("option");
-    optAll.value = "";
-    optAll.textContent = "すべて";
-    sel.appendChild(optAll);
-    FRANCHISE_GROUPS.forEach(function (g) {
-      var og = document.createElement("optgroup");
-      og.label = g.label;
-      g.options.forEach(function (name) {
-        var opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        og.appendChild(opt);
-      });
-      sel.appendChild(og);
-    });
-  }
-
-  function initFilters() {
-    var clients = [];
-    var seen = {};
-    TEMPLATES.forEach(function (t) {
-      if (!seen[t.clientId]) {
-        seen[t.clientId] = true;
-        var label = t.company ? t.company : "クライアントID " + t.clientId;
-        clients.push({ value: String(t.clientId), label: label });
-      }
-    });
-    clients.sort(function (a, b) { return a.label.localeCompare(b.label, "ja"); });
-    populateSelect(document.getElementById("filterClient"), clients, "すべて");
-
-    populateFranchiseSelect();
-
-    populateSelect(
-      document.getElementById("filterScene"),
-      SCENES.map(function (s) { return { value: s, label: s }; }).concat([{ value: "__uncategorized__", label: "未分類" }]),
-      "すべて"
-    );
-    populateSelect(
-      document.getElementById("filterTiming"),
-      TIMINGS.map(function (s) { return { value: s, label: s }; }),
-      "すべて"
-    );
-    populateSelect(
-      document.getElementById("filterCustomerType"),
-      CUSTOMER_TYPES.map(function (s) { return { value: s, label: s }; }),
-      "すべて"
-    );
-    populateSelect(
-      document.getElementById("filterStage"),
-      APPROACH_STAGES.map(function (s) { return { value: s, label: s }; }),
-      "すべて"
-    );
-  }
-
-  function renderSceneChips() {
-    var visible = visibleTemplates();
+  function countsByValue(list, extractor) {
     var counts = {};
-    visible.forEach(function (t) {
-      var key = t.scene || "__uncategorized__";
-      counts[key] = (counts[key] || 0) + 1;
+    list.forEach(function (t) {
+      var v = extractor(t);
+      if (!v) return;
+      counts[v] = (counts[v] || 0) + 1;
     });
-    var wrap = document.getElementById("sceneChips");
-    wrap.innerHTML = "";
-
-    var allChip = document.createElement("div");
-    allChip.className = "tag-chip" + (state.scene === "" ? " active" : "");
-    allChip.innerHTML = "すべて <span class=\"count\">" + visible.length + "</span>";
-    allChip.onclick = function () { state.scene = ""; syncSceneSelect(); render(); };
-    wrap.appendChild(allChip);
-
-    // 0件のシーンも隠さない（「未分類を隠さない」方針と一貫させる。タグがあるのに実例が
-    // 見つからなかったこと自体が「実務で使われていない可能性」という判断材料になるため）
-    SCENES.forEach(function (scene) {
-      var count = counts[scene] || 0;
-      var chip = document.createElement("div");
-      chip.className = "tag-chip" + (state.scene === scene ? " active" : "") + (count === 0 ? " zero" : "");
-      chip.innerHTML = esc(scene) + " <span class=\"count\">" + count + "</span>";
-      chip.onclick = function () {
-        state.scene = state.scene === scene ? "" : scene;
-        syncSceneSelect();
-        render();
-      };
-      wrap.appendChild(chip);
-    });
-
-    // 未分類は最後に、他と同じ見た目で（隠さない）
-    var uncategorizedCount = counts["__uncategorized__"] || 0;
-    var uncChip = document.createElement("div");
-    uncChip.className = "tag-chip uncategorized" + (state.scene === "__uncategorized__" ? " active" : "");
-    uncChip.innerHTML = "未分類 <span class=\"count\">" + uncategorizedCount + "</span>";
-    uncChip.onclick = function () {
-      state.scene = state.scene === "__uncategorized__" ? "" : "__uncategorized__";
-      syncSceneSelect();
-      render();
-    };
-    wrap.appendChild(uncChip);
+    return counts;
   }
 
-  function syncSceneSelect() {
-    document.getElementById("filterScene").value = state.scene;
+  function checkboxOptionHtml(groupStateKey, value, label, count) {
+    var checked = state[groupStateKey].indexOf(value) !== -1;
+    var zero = count === 0 ? " zero-count" : "";
+    return '<label class="' + zero.trim() + '">' +
+      '<input type="checkbox" value="' + esc(value) + '"' + (checked ? " checked" : "") + '>' +
+      esc(label) + ' <span class="count">(' + count + ')</span>' +
+      "</label>";
+  }
+
+  function renderCheckboxGroups() {
+    var pool = visibleTemplates();
+    CHECKBOX_GROUP_DEFS.forEach(function (def) {
+      var counts = countsByValue(pool, def.extractor);
+      var html = def.values.map(function (v) {
+        return checkboxOptionHtml(def.stateKey, v, v, counts[v] || 0);
+      }).join("");
+      if (def.unsetLabel) {
+        html += checkboxOptionHtml(def.stateKey, "__unset__", def.unsetLabel, counts["__unset__"] || 0);
+      }
+      document.getElementById(def.containerId).innerHTML = html;
+    });
+
+    // フランチャイズだけは見出し（車検系／車販系）を維持したグループ表示にする
+    var franchiseCounts = countsByValue(pool, function (t) { return t.franchise; });
+    var franchiseHtml = FRANCHISE_GROUPS.map(function (g) {
+      return '<div class="filter-section-label" style="margin:8px 0 4px;">' + esc(g.label) + "</div>" +
+        g.options.map(function (name) {
+          return checkboxOptionHtml("franchises", name, name, franchiseCounts[name] || 0);
+        }).join("");
+    }).join("");
+    document.getElementById("franchiseChecks").innerHTML = franchiseHtml;
+
+    renderPriceChecks(pool);
+  }
+
+  // 金額は countsByValue() だと 0通（上限超過）が falsy で弾かれてしまうため専用に数える。
+  // 実際に出現する通数だけを表示する（1〜MAX_SEGMENTSを全部並べると選択肢が多すぎるため）
+  function renderPriceChecks(pool) {
+    var counts = {};
+    pool.forEach(function (t) {
+      var s = bodyCharInfo(t).segments;
+      counts[s] = (counts[s] || 0) + 1;
+    });
+    var segmentsPresent = [];
+    for (var key in counts) segmentsPresent.push(Number(key));
+    // 金額の安い順に並べ、上限超過（0＝金額が付かない特殊枠）は末尾に回す
+    segmentsPresent.sort(function (a, b) {
+      if (a === 0) return 1;
+      if (b === 0) return -1;
+      return a - b;
+    });
+    var html = segmentsPresent.map(function (s) {
+      return checkboxOptionHtml("priceTiers", String(s), priceTierLabel(s), counts[s]);
+    }).join("");
+    document.getElementById("priceChecks").innerHTML = html;
   }
 
   // 「店舗違いをまとめる」OFF のとき、storeVariants を持つ行を実登録件数どおりに展開する。
@@ -2227,24 +2480,47 @@
     return badge + table;
   }
 
+  // 絞り込み軸になるタグだけクリック可能にする（使用中止・個人宛・テスト用は表示フラグの
+  // 話であって絞り込み軸ではないため押せなくする）。kw はハイライト用の検索語（小文字化済み）
+  // filterKey は state 上の配列キー（例: "scenes"）。カードのタグは掛け合わせ式の
+  // 絞り込み配列に対するトグルスイッチとして働く（クリックで追加・もう一度押すと解除）
+  function miniTag(label, extraClass, filterKey, filterValue, kw) {
+    var cls = "mini-tag" + (extraClass ? " " + extraClass : "");
+    var attrs = "";
+    if (filterKey) {
+      var active = state[filterKey].indexOf(filterValue) !== -1;
+      cls += " clickable" + (active ? " active" : "");
+      attrs = ' data-filter-key="' + filterKey + '" data-filter-value="' + esc(filterValue) + '"';
+    }
+    return '<span class="' + cls + '"' + attrs + '>' + highlightKeyword(esc(label), kw) + "</span>";
+  }
+
   function cardHtml(t) {
+    var kw = state.keyword.trim().toLowerCase();
     var picked = state.tray.indexOf(t.id) !== -1;
     var titleClass = t.templateName ? "card-title" : "card-title fallback";
-    var titleHtml = renderTitleWithFallback(t, 18, "自動生成・未保存");
+    var titleHtml = highlightKeyword(renderTitleWithFallback(t, 18, "自動生成・未保存"), kw);
     var companyClass = t.company ? "card-company" : "card-company fallback-id";
-    var companyText = t.company ? maskCompany(t.company) : "クライアントID " + t.clientId;
+    var companyText = t.company
+      ? highlightKeyword(maskCompany(t.company), kw)
+      : "クライアントID " + t.clientId;
     var statusClass = statusPillClass(t.status);
     var tags = [];
-    if (t.scene) tags.push('<span class="mini-tag">' + esc(t.scene) + "</span>");
-    else tags.push('<span class="mini-tag warn">未分類</span>');
-    if (t.timing) tags.push('<span class="mini-tag">' + esc(t.timing) + "</span>");
-    if (t.franchise) tags.push('<span class="mini-tag">' + esc(t.franchise) + "</span>");
-    tags.push('<span class="mini-tag">' + esc(t.smsType) + "</span>");
-    if (t.customerType) tags.push('<span class="mini-tag">' + esc(t.customerType) + "</span>");
-    if (t.stage) tags.push('<span class="mini-tag">' + esc(t.stage) + "</span>");
-    if (t.lifecycle === "retired") tags.push('<span class="mini-tag retired">使用中止</span>');
-    if (t.isPersonal) tags.push('<span class="mini-tag personal">個人宛</span>');
-    if (t.isTest) tags.push('<span class="mini-tag warn">テスト用</span>');
+    // 推薦バッジは押しても絞り込まない（人名は分類軸ではないため clickable にしない）。
+    // 「推しポイントを表示」トグルで型の解説（💡）とまとめてON/OFFする
+    if (state.showInsights && t.recommendedBy) tags.push(miniTag("★" + t.recommendedBy + "推薦", "recommend", null, null, kw));
+    if (t.scene) tags.push(miniTag(t.scene, "", "scenes", t.scene, kw));
+    else tags.push(miniTag("未分類", "warn", "scenes", "__uncategorized__", kw));
+    if (t.timing) tags.push(miniTag(t.timing, "", "timings", t.timing, kw));
+    if (t.franchise) tags.push(miniTag(t.franchise, "", "franchises", t.franchise, kw));
+    tags.push(miniTag(t.smsType, "", "smsTypes", t.smsType, kw));
+    // 顧客区分（コバックリピート等）はサイドバーでは「新規/リピート」に丸めているため、
+    // ここは情報表示のみ（クリックでは絞り込まない）
+    if (t.customerType) tags.push(miniTag(t.customerType, "", null, null, kw));
+    if (t.stage) tags.push(miniTag(t.stage, "", "stages", t.stage, kw));
+    if (t.lifecycle === "retired") tags.push(miniTag("使用中止", "retired", null, null, kw));
+    if (t.isPersonal) tags.push(miniTag("個人宛", "personal", null, null, kw));
+    if (t.isTest) tags.push(miniTag("テスト用", "warn", null, null, kw));
 
     return (
       '<div class="card' + (picked ? " picked" : "") + '" data-id="' + t.id + '">' +
@@ -2259,15 +2535,20 @@
       "</div>" +
       "</div>" +
       '<div class="card-stats">' +
-      '<div class="send-count">' + sendCountLabel(t) + "</div>" +
+      // 2026-09-24 MTGで「文字数より金額を目立たせ、通数は補助情報として小さく」
+      // 「送信通数はチェックの決め手にしていない」との指摘を受け、金額を主役にする
+      '<div class="send-count">' + bodyPriceLabel(t) + "</div>" +
+      '<div class="card-char-count">' + bodyCharLabel(t) + "</div>" +
       // 状態「不明」は紛らわしいという指摘を受け、システム状態が分かる時だけピルを出す。
       // 「使用中止」の意味は下のタグ（テンプレート名判定）でまかなえている
       (t.status !== "不明" ? '<span class="status-pill ' + statusClass + '">' + esc(t.status) + "</span>" : "") +
-      '<div class="card-char-count">' + bodyCharLabel(t) + "</div>" +
       "</div>" +
       "</div>" +
       '<div class="card-tags">' + tags.join("") + "</div>" +
-      '<div class="card-body-excerpt">' + renderBody(bodyExcerpt(t.body, 70), state.masked) + "</div>" +
+      '<div class="card-body-full">' + highlightKeyword(renderBody(t.body, state.masked), kw) + "</div>" +
+      (state.showInsights && t.insight
+        ? '<div class="card-insight">💡 ' + highlightKeyword(renderBody(t.insight, state.masked), kw) + "</div>"
+        : "") +
       '<div class="store-variant-wrap">' + storeVariantSectionHtml(t) + "</div>" +
       "</div>"
     );
@@ -2315,21 +2596,15 @@
 
   function renderSearchPanel() {
     document.getElementById("keyword").value = state.keyword;
-    document.getElementById("filterClient").value = state.client;
-    document.getElementById("filterFranchise").value = state.franchise;
-    document.getElementById("filterTiming").value = state.timing;
-    document.getElementById("filterType").value = state.smsType;
-    document.getElementById("filterCustomerType").value = state.customerType;
-    document.getElementById("filterStage").value = state.stage;
     document.getElementById("filterIncludeRetired").checked = state.includeRetired;
     document.getElementById("filterIncludePersonal").checked = state.includePersonal;
     document.getElementById("filterIncludeTest").checked = state.includeTest;
     document.getElementById("filterIncludePlatelike").checked = state.includePlatelike;
     document.getElementById("filterConsolidateStores").checked = state.consolidateStores;
-    document.getElementById("sortOrder").value = state.sort;
-    syncSceneSelect();
+    document.getElementById("insightToggle").checked = state.showInsights;
 
-    renderSceneChips();
+    renderCheckboxGroups();
+    syncFilterMoreOpenState();
 
     var baseList = filtered();
     var list = sorted(state.consolidateStores ? baseList : expandStoreVariants(baseList));
@@ -2338,13 +2613,17 @@
     var total = state.consolidateStores ? visibleTemplates().length : expandStoreVariants(visibleTemplates()).length;
     var registeredTotal = TEMPLATES.length;
 
+    // 並び替えは「新しい順」固定（2026-09-24 MTG）。実データは作成日がほぼ未取得のため、
+    // その旨も明記する（BigQuery連携後に初めて効いてくる）
     var metaText = list.length + " 件表示中（除外設定を反映した母数 " + total + " 件中";
     if (state.consolidateStores) {
       metaText += "／店舗違いをまとめた表示。実登録 " + registeredTotal + " 件）";
     } else {
       metaText += "／実登録件数どおりに展開表示）";
     }
-    document.getElementById("resultMeta").textContent = metaText;
+    metaText += "・新しい順で表示中" + (USING_REAL_DATA ? "（作成日が未取得の文例は並びません）" : "");
+    document.getElementById("resultMetaMain").textContent = metaText;
+    renderActiveFilterChips();
 
     var listEl = document.getElementById("cardList");
     var emptyEl = document.getElementById("emptyState");
@@ -2359,6 +2638,96 @@
     if (state.selectedId != null) {
       if (findTemplateById(state.selectedId)) renderDetail(state.selectedId);
     }
+  }
+
+  // 「さらに絞り込む」等の <details> は、中の条件が何か効いている間は開いたままにする。
+  // ユーザーが手で閉じても、効いている条件がある限りは次の再描画で開き直す
+  // （隠れた条件が効いたまま気付かない事故を防ぐのを優先する）
+  function syncFilterMoreOpenState() {
+    var purposeActive = state.purposes.length > 0;
+    var conditionsActive = state.franchises.length > 0 || state.stages.length > 0;
+    var displayActive = !!(
+      state.includeRetired || state.includePersonal || state.includeTest ||
+      state.includePlatelike || !state.consolidateStores
+    );
+    if (purposeActive) document.getElementById("filterMorePurpose").open = true;
+    if (conditionsActive) document.getElementById("filterMoreConditions").open = true;
+    if (displayActive) document.getElementById("filterMoreDisplay").open = true;
+  }
+
+  // 適用中の絞り込み条件を、件数表示のすぐ下にチップで出す。
+  // 「×」クリックでその条件（配列内のその1値）だけ解除できるようにして、絞り込みリセット
+  // ボタン（サイドバー最下部で視線外だった）の役割をここに移す
+  var MULTI_AXIS_DEFS = [
+    { key: "products", labelFor: function (v) { return v === "__unset__" ? "未設定" : v; } },
+    { key: "smsTypes", labelFor: function (v) { return v; } },
+    { key: "customerSegments", labelFor: function (v) { return v; } },
+    { key: "purposes", labelFor: function (v) { return v === "__unset__" ? "未設定" : v; } },
+    { key: "franchises", labelFor: function (v) { return v; } },
+    { key: "stages", labelFor: function (v) { return v; } },
+    { key: "scenes", labelFor: function (v) { return v === "__uncategorized__" ? "未分類" : v; } },
+    { key: "timings", labelFor: function (v) { return v; } },
+    { key: "priceTiers", labelFor: function (v) { return priceTierLabel(Number(v)); } }
+  ];
+  var CHECKBOX_FLAG_DEFS = [
+    { key: "includeRetired", label: "使用中止も表示" },
+    { key: "includePersonal", label: "個人宛も表示" },
+    { key: "includeTest", label: "テスト用も表示" },
+    { key: "includePlatelike", label: "ナンバー記載も表示" }
+  ];
+
+  function renderActiveFilterChips() {
+    var wrap = document.getElementById("resultMetaChips");
+    var chips = [];
+
+    MULTI_AXIS_DEFS.forEach(function (def) {
+      state[def.key].forEach(function (v) {
+        chips.push({ axisKey: def.key, value: v, label: def.labelFor(v) });
+      });
+    });
+    CHECKBOX_FLAG_DEFS.forEach(function (def) {
+      if (state[def.key]) chips.push({ flagKey: def.key, label: def.label });
+    });
+
+    if (chips.length === 0) {
+      wrap.innerHTML = "";
+      return;
+    }
+
+    var html = chips.map(function (c) {
+      var dataAttrs = c.axisKey
+        ? 'data-axis-key="' + c.axisKey + '" data-value="' + esc(c.value) + '"'
+        : 'data-flag-key="' + c.flagKey + '"';
+      return '<div class="filter-chip" ' + dataAttrs + '><span class="x">×</span>' + esc(c.label) + "</div>";
+    }).join("");
+    html += "<span class=\"reset-link\" id=\"resetFiltersLink\">すべて解除</span>";
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll(".filter-chip").forEach(function (el) {
+      el.addEventListener("click", function () {
+        var axisKey = el.getAttribute("data-axis-key");
+        if (axisKey) {
+          removeFromAxis(axisKey, el.getAttribute("data-value"));
+        } else {
+          state[el.getAttribute("data-flag-key")] = false;
+        }
+        render();
+      });
+    });
+    document.getElementById("resetFiltersLink").addEventListener("click", resetAllFilters);
+  }
+
+  function removeFromAxis(axisKey, value) {
+    var idx = state[axisKey].indexOf(value);
+    if (idx !== -1) state[axisKey].splice(idx, 1);
+  }
+
+  function resetAllFilters() {
+    // キーワードはこのフォームの外にあるため、リセット対象に含めない
+    MULTI_AXIS_DEFS.forEach(function (def) { state[def.key] = []; });
+    CHECKBOX_FLAG_DEFS.forEach(function (def) { state[def.key] = false; });
+    // 「店舗違いをまとめる」は表示のまとめ方の好みなのでリセット対象に含めない
+    render();
   }
 
   function renderStepNav() {
@@ -2399,7 +2768,13 @@
     state.tray.push(id);
     if (wasEmpty) {
       var t = findTemplateById(id);
-      if (t) state.draftSmsType = mappedType(t);
+      if (t) {
+        var mt = mappedType(t);
+        // リマインドが一旦伏せられている間は、リマインド型の文例を選んでも
+        // ②の型をリマインドに切り替えない（隠したタブの型で計算される事故を防ぐ）。
+        // テキストとして計算していることは renderDraftPanel() の注記で明示する
+        state.draftSmsType = (!REMINDER_ENABLED && mt === "reminder") ? "text" : mt;
+      }
     }
     render();
   }
@@ -2518,11 +2893,17 @@
 
     var mismatchEl = document.getElementById("typeMismatchWarn");
     var distinctTypes = [];
+    var hasReminderTemplate = false;
     trayTemplates.forEach(function (t) {
       var mt = mappedType(t);
+      if (mt === "reminder") hasReminderTemplate = true;
       if (distinctTypes.indexOf(mt) === -1) distinctTypes.push(mt);
     });
-    if (distinctTypes.length > 1) {
+    if (!REMINDER_ENABLED && hasReminderTemplate) {
+      // リマインドを一旦伏せている間、addToTray() が型をテキストにクランプしているため、
+      // 黙って別の型で計算されている状態にならないようここで必ず明示する
+      mismatchEl.innerHTML = '<div class="type-mismatch-warn">選んだ文例にリマインド型が含まれていますが、リマインドの文字数計算は現在調整中のためテキストとして計算しています。</div>';
+    } else if (distinctTypes.length > 1) {
       mismatchEl.innerHTML = '<div class="type-mismatch-warn">選択した文例のSMSの型が混ざっています（テキストと入庫連動）。上の「SMSの型」で実際に使う型を選び直してください。</div>';
     } else {
       mismatchEl.innerHTML = "";
@@ -2604,7 +2985,7 @@
 
     if (state.draftSmsType === "reminder") {
       var over = c.total > 70;
-      mainEl.textContent = c.total + "文字 ｜ " + (over ? "—" : "1通 ｜ " + priceForSegments(1).toFixed(1) + "円/件");
+      mainEl.textContent = c.total + "文字 ｜ " + (over ? "—" : "1通 ｜ " + priceForSegments(1).toFixed(0) + "円/件");
       var detailParts = ["改行 " + c.newlineCount + "ヶ所（" + c.newlineCount + "文字）"];
       c.usedVars.forEach(function (v) {
         detailParts.push(v.token + "×" + v.count + "（" + v.chars + "文字換算）");
@@ -2620,7 +3001,7 @@
     var price = priceForSegments(segments);
     var overLimit = c.total > MAX_CHARS;
 
-    mainEl.textContent = c.total + "文字 ｜ " + (overLimit ? "—" : segments + "通 ｜ " + price.toFixed(1) + "円/件");
+    mainEl.textContent = c.total + "文字 ｜ " + (overLimit ? "—" : segments + "通 ｜ " + price.toFixed(0) + "円/件");
     var parts = ["改行 " + c.newlineCount + "ヶ所（" + (c.newlineCount * 2) + "文字）"];
     if (c.urlChars) parts.push("入庫予約URL " + c.urlChars + "文字を含む");
     detailEl.textContent = overLimit ? "" : "（" + parts.join(" ／ ") + "）";
@@ -2664,7 +3045,7 @@
     var segments = isReminder ? (c.total <= 70 ? 1 : 0) : countSegments(c.total);
     var price = priceForSegments(segments);
     document.getElementById("reqCountDisplay").textContent =
-      c.total + "文字 / " + (segments || "—") + "通 / " + price.toFixed(1) + "円";
+      c.total + "文字 / " + (segments || "—") + "通 / " + price.toFixed(0) + "円";
 
     document.getElementById("requestPreview").textContent = buildRequestText();
   }
@@ -2688,7 +3069,7 @@
       lines.push("■ 店舗名／工場名: " + (state.reqStoreName || "（未入力）"));
     }
     lines.push("");
-    lines.push("■ 文面（" + c.total + "文字 / " + (segments || "—") + "通 / " + price.toFixed(1) + "円）");
+    lines.push("■ 文面（" + c.total + "文字 / " + (segments || "—") + "通 / " + price.toFixed(0) + "円）");
     var bodyText = state.masked ? maskTextPlain(state.draftText) : state.draftText;
     lines.push(bodyText || "（文章案が未入力です）");
     if (state.draftSmsType === "nyuko") {
@@ -2725,6 +3106,11 @@
   function urlCellHtml(url) {
     if (!url) return "—";
     if (state.masked) return "https://●●●●●●●●●●";
+    // 2026-09-25 code-review 指摘: BigQuery由来の自由記述URLをhrefへそのまま埋め込むと、
+    // javascript: 等のスキームが混入していた場合にクリックで実行されてしまう
+    // （esc()はHTML特殊文字のエスケープのみでスキームは見ていない）。
+    // http/https以外はリンク化せず、テキスト表示に留める。
+    if (!/^https?:\/\//i.test(url)) return esc(url);
     var safeHref = esc(url);
     return '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer">' + safeHref + "</a>";
   }
@@ -2775,6 +3161,23 @@
       }
     }
 
+    // 「プランナー推薦」＝誰がこの文面を選んで共有したか。「型・狙い」（下のinsight）とは
+    // 別軸で持つ（推薦の有無と、型として面白いかは別の話のため）
+    var recommendHtml = t.recommendedBy
+      ? '<div class="detail-section"><h4>プランナー推薦</h4>' +
+        '<div style="font-size:12px;color:var(--text);">' + esc(t.recommendedBy) + "さんが共有" +
+        (t.recommendedAt ? "（" + esc(t.recommendedAt) + "）" : "") + "</div>" +
+        "</div>"
+      : "";
+
+    // 「この文面の型・狙い」＝なぜこの作りなのか、他とどう違うか。BigQuery連携で
+    // テンプレート本体が置き換わっても annotations 側は残る（テンプレート本体とは別レイヤー）
+    var insightHtml = t.insight
+      ? '<div class="detail-section"><h4>この文面の型・狙い</h4>' +
+        '<div style="font-size:12.5px;color:var(--text);line-height:1.6;">' + renderBody(t.insight, state.masked) + "</div>" +
+        "</div>"
+      : "";
+
     // 「出典」＝この文例をどこから見つけてきたか（Slackの投稿／実際の設定画面 等）のメモ。
     // BigQuery連携前の実文例調査（materials/sms-corpus.md）で人が調べた記録なので、
     // 見出しだけでは伝わりにくく、一言説明を必ず添える
@@ -2814,6 +3217,8 @@
       "</table>" +
       "</div>" +
       revisionHtml +
+      recommendHtml +
+      insightHtml +
       sourceHtml +
       '<div class="detail-section">' +
       "<h4>実績・履歴</h4>" +
@@ -2886,34 +3291,6 @@
       state.keyword = e.target.value;
       render();
     });
-    document.getElementById("filterClient").addEventListener("change", function (e) {
-      state.client = e.target.value;
-      render();
-    });
-    document.getElementById("filterFranchise").addEventListener("change", function (e) {
-      state.franchise = e.target.value;
-      render();
-    });
-    document.getElementById("filterScene").addEventListener("change", function (e) {
-      state.scene = e.target.value;
-      render();
-    });
-    document.getElementById("filterTiming").addEventListener("change", function (e) {
-      state.timing = e.target.value;
-      render();
-    });
-    document.getElementById("filterType").addEventListener("change", function (e) {
-      state.smsType = e.target.value;
-      render();
-    });
-    document.getElementById("filterCustomerType").addEventListener("change", function (e) {
-      state.customerType = e.target.value;
-      render();
-    });
-    document.getElementById("filterStage").addEventListener("change", function (e) {
-      state.stage = e.target.value;
-      render();
-    });
     document.getElementById("filterIncludeRetired").addEventListener("change", function (e) {
       state.includeRetired = e.target.checked;
       render();
@@ -2934,28 +3311,28 @@
       state.consolidateStores = e.target.checked;
       render();
     });
-    document.getElementById("sortOrder").addEventListener("change", function (e) {
-      state.sort = e.target.value;
+    document.getElementById("insightToggle").addEventListener("change", function (e) {
+      state.showInsights = e.target.checked;
       render();
+    });
+    // 絞り込みチェックボックス群（商材・SMSの型・顧客区分・金額・目的・フランチャイズ・アプローチ段階）。
+    // 掛け合わせ式なので、チェックのオン/オフをそのまま配列への追加/削除にする
+    CHECKBOX_GROUP_DEFS.concat([
+      { containerId: "franchiseChecks", stateKey: "franchises" },
+      { containerId: "priceChecks", stateKey: "priceTiers" }
+    ]).forEach(function (def) {
+      document.getElementById(def.containerId).addEventListener("change", function (e) {
+        var cb = e.target.closest('input[type="checkbox"]');
+        if (!cb) return;
+        var arr = state[def.stateKey];
+        var idx = arr.indexOf(cb.value);
+        if (cb.checked) { if (idx === -1) arr.push(cb.value); }
+        else if (idx !== -1) { arr.splice(idx, 1); }
+        render();
+      });
     });
     document.getElementById("maskToggle").addEventListener("change", function (e) {
       state.masked = e.target.checked;
-      render();
-    });
-    document.getElementById("resetFilters").addEventListener("click", function () {
-      // キーワードはこのフォームの外にあるため、リセット対象に含めない
-      state.client = "";
-      state.franchise = "";
-      state.scene = "";
-      state.timing = "";
-      state.smsType = "";
-      state.customerType = "";
-      state.stage = "";
-      state.includeRetired = false;
-      state.includePersonal = false;
-      state.includeTest = false;
-      state.includePlatelike = false;
-      // 「店舗違いをまとめる」は表示のまとめ方の好みなのでリセット対象に含めない
       render();
     });
     document.getElementById("overlayBackdrop").addEventListener("click", closeDetail);
@@ -2972,12 +3349,24 @@
       var checkboxLabel = e.target.closest(".pick-box");
       var expandBtn = e.target.closest(".expand-store-btn");
       var variantTable = e.target.closest(".store-variant-table");
+      var tagEl = e.target.closest(".mini-tag.clickable");
       var card = e.target.closest(".card");
       if (!card) return;
       var id = card.getAttribute("data-id");
       if (expandBtn) {
         var idx = state.expandedStoreIds.indexOf(id);
         if (idx === -1) state.expandedStoreIds.push(id); else state.expandedStoreIds.splice(idx, 1);
+        render();
+        return;
+      }
+      // 分類タグは「結果を見てから辿る」入口。押したら詳細は開かず、その条件を配列に
+      // 追加する（同じ値をもう一度押したら解除。掛け合わせ式の他軸の選択には触れない）
+      if (tagEl) {
+        var key = tagEl.getAttribute("data-filter-key");
+        var val = tagEl.getAttribute("data-filter-value");
+        var arr = state[key];
+        var idx = arr.indexOf(val);
+        if (idx === -1) arr.push(val); else arr.splice(idx, 1);
         render();
         return;
       }
@@ -3072,9 +3461,14 @@
   // ----------------------------------------------------------------
   // 初期化
   // ----------------------------------------------------------------
-  // 実データ表示中は伏せモードを既定 ON にする（社外・画面共有時の事故を防ぐため）
-  if (USING_REAL_DATA) state.masked = true;
-  initFilters();
+  // 伏せモードは既定OFF（2026-09-25 ユーザー指摘：実データでも自動ONにしない）。
+  // 実データ表示中かどうかは赤帯バナー（realDataBanner）で常に警告しているので、
+  // マスクの要否は利用者の判断に委ねる
+  // ②文章案タブのリマインドタブを一旦伏せる（REMINDER_ENABLED 参照）
+  if (!REMINDER_ENABLED) {
+    var reminderTab = document.querySelector('.sms-type-tab[data-type="reminder"]');
+    if (reminderTab) reminderTab.style.display = "none";
+  }
   bindEvents();
   setUpdatedAt();
   render();
