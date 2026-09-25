@@ -34,6 +34,6 @@
     }
   },
   "postCreateCommand": "bash -lc 'if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; elif [ -f package-lock.json ]; then npm ci; elif [ -f package.json ]; then echo \"[ERROR] lockfile が無いため依存インストールを中止（サプライチェーン対策で lockfile 必須）。ガイドラインは pnpm 推奨: コンテナ内で pnpm install --lockfile-only を実行 → pnpm-lock.yaml を commit。詳細は ONBOARDING.md Step 4-3\" >&2; exit 1; else echo \"package.json なし: 依存インストールをスキップ\"; fi'",
-  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && sudo /usr/local/bin/fix-permissions.sh ${localWorkspaceFolderBasename} && { bash /usr/local/bin/refresh-claude-config.sh || true; }",
+  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh && { /usr/local/bin/refresh-allowed-ips.sh --start || true; } && sudo /usr/local/bin/fix-permissions.sh ${localWorkspaceFolderBasename} && { bash /usr/local/bin/refresh-claude-config.sh || true; }",
   "waitFor": "postStartCommand"
 }

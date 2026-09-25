@@ -86,6 +86,44 @@ RUN chmod +x /usr/local/bin/init-firewall.sh \
     && echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall \
     && chmod 0440 /etc/sudoers.d/node-firewall
 
+# ============================================================
+# 許可ドメインIPの定期再解決（ipset 追従）
+# 理由: Google API 系は TTL 数十〜200秒でIPがローテーションし、/24 すらまたぐ
+#       （実測: oauth2.googleapis.com 192.178.230.95 → 192.178.226.95）。
+#       起動時 dig の1点しか ipset に無いと時間経過で "No route to host" になる。
+# ⚠️ このブロックは guideline テンプレート由来ではない本プロジェクト固有の追加。
+#    sync-template.sh --apply で上書きされるため、実行後は復元すること
+#    （docs/DEVELOPMENT_PLAN.md §④）。
+#
+# sudoers は "--once" まで引数を固定する。引数を省略すると node が任意の引数で
+# root実行できてしまい（例: ドメイン定義ファイルのパスを差し替えて任意IPを
+# ipsetに注入する等）、ファイアウォールの実質無効化に繋がるため必ず引数まで書くこと。
+# allowed-domains.sh は 0444 root:root にして node から書き換え不可にする。
+# ============================================================
+COPY allowed-domains.sh /usr/local/lib/devcontainer-firewall/allowed-domains.sh
+COPY refresh-allowed-ips.sh /usr/local/bin/
+RUN chmod 0444 /usr/local/lib/devcontainer-firewall/allowed-domains.sh \
+    && chown root:root /usr/local/lib/devcontainer-firewall/allowed-domains.sh \
+    && chmod +x /usr/local/bin/refresh-allowed-ips.sh \
+    && echo "node ALL=(root) NOPASSWD: /usr/local/bin/refresh-allowed-ips.sh --once" \
+       > /etc/sudoers.d/node-firewall-refresh \
+    && chmod 0440 /etc/sudoers.d/node-firewall-refresh \
+    && mkdir -p /var/log/devcontainer-firewall \
+    && chmod 1777 /var/log/devcontainer-firewall
+# ターミナル起動時、常駐プロセスが停止していたら自動で再起動を試みる（正常時は無言）。
+# 2026-09-25: postStartCommand 経由の起動が何らかの理由で通らなかった場合の保険。
+# 非エンジニア運用では「警告を見て自分でコマンドを打つ」を期待できないため、
+# 気づかせるだけでなく、まず自動で立て直しを試みる（それでも失敗したときだけ警告する）。
+RUN printf '%s\n' \
+    '# devcontainer 固有: 許可ドメインIPリフレッシャの死活を確認・自動復旧（正常時は無言）' \
+    'if ! /usr/local/bin/refresh-allowed-ips.sh --status >/dev/null 2>&1; then' \
+    '  /usr/local/bin/refresh-allowed-ips.sh --start >/dev/null 2>&1' \
+    '  sleep 2' \
+    '  /usr/local/bin/refresh-allowed-ips.sh --status >/dev/null 2>&1 || /usr/local/bin/refresh-allowed-ips.sh --status' \
+    'fi' \
+    > /etc/profile.d/99-firewall-refresh-status.sh \
+    && chmod 0644 /etc/profile.d/99-firewall-refresh-status.sh
+
 # 起動時の所有権補正（Named Volume の stale ownership 対策）
 # 詳細は feedback_claude_home_isolation.md 参照
 COPY fix-permissions.sh /usr/local/bin/
