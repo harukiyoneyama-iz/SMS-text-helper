@@ -73,7 +73,7 @@
 
 **あえて入れないもの**:
 - **データベース（SQLite 等）** — テンプレートは1万件規模。キャッシュしたJSONをメモリ上で配列フィルタすれば足りる。DBを増やすと依存も運用も増える
-- **`@google-cloud/bigquery`** — Phase 1 の当面の目標は「営業メンバーに見せる画面モックアップ」（ダミーデータで可）であり、BigQuery接続は本計画の対象外。§⑤の構成図のとおり、BigQueryに触るのは「SQLを1本流してJSONに落とす」スクリプト1本だけで、アプリ本体はそのJSONを読むだけなので、後から足しても画面側のコードには影響しない。接続情報が届いた時点で `^8.3.1`（Node 20 対応。v9 は Node 22 必須）を足すか、gcloud 同梱の `bq` コマンドで代替するかを判断する
+- **`@google-cloud/bigquery`** — **2026-09-25 確定: 追加しない**。§⑤の構成図のとおり、BigQueryに触るのは「SQLを1本流してJSONに落とす」スクリプト（`scripts/fetch-templates.sh`）1本だけで、アプリ本体はそのJSONを読むだけ。gcloud 同梱の `bq` コマンドで完結させる方が、依存を増やさずサプライチェーンリスクもゼロで、Phase 1 のキャッシュ生成には十分。Phase 1.5 で日次スケジュールクエリに切り替える際に改めて検討する（その場合も Node 20 制約下では `^8.3.1` 系に固定。v9 は Node 22 必須）
 - **UIコンポーネントライブラリ** — Tailwind で足りる
 
 ### Node 20 が最新メジャーを弾いている件（別課題）
@@ -88,13 +88,26 @@
   - 当初は生テーブル `gnote_jty_prod` の6テーブルに直接アクセスする想定だったが、**生テーブルへの権限は付与されていない**。SMS文例に必要な範囲だけを切り出したビュー越しにアクセスする
   - ビューの構成: 文面／配信設定／配信バッチ／送信結果／テンプレート別実績
   - 「よく送られている順」は `vw_sms_template_usage` を `send_count` の降順に並べるだけで出る
-- 接続方式: サービスアカウントキーは使わない。`gcloud auth login` ＋ `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` によるキーレス impersonation（`GCP_INTEGRATION_GUIDE.md` の標準手順）
+- 接続方式: **2026-09-25 内田さん回答により変更**。サービスアカウントキー・なりすまし用サービスアカウント（impersonation）のどちらも使わない。米山さん本人の Google アカウント（`haruki.yoneyama@inter-zone.jp`）に直接権限が付与されており、コンテナ内で `gcloud auth login` するだけで接続できる
+  - クエリ実行は Node のライブラリではなく、gcloud 同梱の `bq` コマンドで行う（`@google-cloud/bigquery` は追加しない。§③ 参照）
 - 必要な権限（最小スコープ）: **上記ビュー5本の閲覧権限 ＋ クエリ実行権限**。テーブル作成権限は不要（内田さん確認済み）
   - 生テーブル（`nskn_customers` 等の個人情報本体を含む）へのアクセス権は持たない。ビューが権限の境界そのものになっている
-- **`.devcontainer/` への本プロジェクト固有の変更**（2026-09-18 実施）:
-  - `init-firewall.sh` の `REQUIRED_DOMAINS` に `bigquery.googleapis.com` と `iamcredentials.googleapis.com` を追加。後者は impersonation（権限の借用）に必須で、無いと認証は通るのにクエリ直前で失敗する。認証に使う `oauth2.googleapis.com` / `accounts.google.com` は `OPTIONAL_DOMAINS` に既出
-  - `Dockerfile` に Google Cloud CLI（gcloud）を追加。鍵ファイルを置かない方針のため、利用者本人が都度認証するのに必要。クエリ実行自体は Node のライブラリが行う
-  - ⚠️ **`.devcontainer/` の正本は guideline リポジトリの `templates/`**。`sync-template.sh --apply` を実行すると上記2つは**上書きされて消える**（`.bak` は残る）。BigQuery は全プロジェクト共通の要件ではないためテンプレート側には入れない。同期を実行したら、この2箇所を復元すること
+- **`.devcontainer/` への本プロジェクト固有の変更**（2026-09-18 実施、2026-09-25 更新）:
+  - `init-firewall.sh` の `REQUIRED_DOMAINS` に `bigquery.googleapis.com` を追加。認証に使う `oauth2.googleapis.com` / `accounts.google.com` は `OPTIONAL_DOMAINS` に既出
+    - `iamcredentials.googleapis.com`（impersonation 専用）は 2026-09-25 に削除。なりすまし用サービスアカウントが不要になったため
+  - `Dockerfile` に Google Cloud CLI（gcloud）を追加済み。鍵ファイルを置かない方針のため、利用者本人が都度認証するのに必要。クエリ実行自体は `bq` コマンドで行う
+  - **2026-09-25 追加（IPローテーション対策）**: Google API 系のホスト名は TTL 数十〜200秒でIPがローテーションし、/24 すらまたぐ（実測: `oauth2.googleapis.com` が `192.178.230.95` → `192.178.226.95` に移動）。起動時 dig の1点しか ipset に無いと時間経過で "No route to host" になり、実際に `bq ls` がこれで失敗した。対策として `allowed-domains.sh`（許可ドメイン定義の切り出し）と `refresh-allowed-ips.sh`（60秒ごとに再解決して ipset に追記する常駐スクリプト）を追加し、`Dockerfile` と `devcontainer.json`（`postStartCommand`）から組み込んだ。許可ドメインの範囲は広げていない（Google の公開IPレンジ一括許可は、YouTube / Gmail / Drive 等への経路も同時に開くため L3 案件の最小権限方針に反すると判断し不採用。/24 への丸めも、上記の実測どおり/24をまたいで移動するため無意味と判断）
+  - ⚠️ **`.devcontainer/` の正本は guideline リポジトリの `templates/`**。`sync-template.sh --apply` を実行すると以下の**4箇所は上書きされて消える**（`.bak` は残る）。BigQuery は全プロジェクト共通の要件ではないためテンプレート側には入れない。同期を実行したら、この4箇所を復元すること:
+    1. `init-firewall.sh` の `bigquery.googleapis.com` 追加および `allowed-domains.sh` への切り出し
+    2. `Dockerfile` の Google Cloud CLI 導入ブロック
+    3. `Dockerfile` / `devcontainer.json` の IPローテーション対策（`allowed-domains.sh` / `refresh-allowed-ips.sh` の COPY・sudoers・postStartCommand 呼び出し、および `/etc/profile.d/99-firewall-refresh-status.sh` の自動復旧スクリプト）
+    4. `allowed-domains.sh` / `refresh-allowed-ips.sh` 本体（新規ファイルのため、テンプレ同期の対象外だが消えていないか要確認）
+
+    ⚠️ 2026-09-25 code-review 指摘: 項目3の `profile.d` スクリプトは、`postStartCommand` 経由の起動が
+    何らかの理由で通らなかったときの唯一の自動復旧手段。これを復元し忘れると、COPY・sudoers・
+    postStartCommand を戻しても「気づかないまま止まる」という元の不具合の再発防止だけが欠けた
+    状態になる。復元時は必ずこの4項目をセットで確認すること。
+  - **IPローテーション対策は本プロジェクト固有ではなく、Google API を使う他プロジェクトでも同様に起きうる**。guideline リポジトリの `templates/` 側への反映は本 Dev Container からは行えない（`/c/CursorPJ/guideline` はこの環境から見えない）ため、ホスト側で別途判断する
 - 扱うデータの分類: **L3 確定**（2026-09-15 トリアージ実施。`.security-level=3`、`docs/triage-record.md` 参照）
 - L3 プロセス: Slack `#ai-jigyobu-engineer-consult` で相談済み（2026-09-15 投稿 → 2026-09-18 内田さん回答）。`docs/engineer-consultation.md`（6項目・有効期限つき）の記入が開発開始の前提
 - 社外の人が書いた文章が入る項目: **あり**（SMS本文はクライアント作成のものを含む）
@@ -361,7 +374,7 @@ sms-corpus.md の収集方法（Slack・設定画面のスクリーンショッ�
 - `docs/engineer-consultation.md` 記入済み（有効期限 2026-12-18）→ **L3 の開発着手条件クリア**
 - `.devcontainer/init-firewall.sh` に `bigquery.googleapis.com` / `iamcredentials.googleapis.com` を追記
 - `.devcontainer/Dockerfile` に Google Cloud CLI を追加 → 再ビルド済み（gcloud 585.0.0 / bq 2.1.38）
-- `gcloud auth login` 完了（`haruki.yoneyama@inter-zone.jp` がアクティブ）。**プロジェクトは未設定**（`Your current project is [None]`）
+- `gcloud auth login` 完了（`haruki.yoneyama@inter-zone.jp` がアクティブ）。**プロジェクトは未設定**（`Your current project is [None]`）。※2026-09-25 時点で認証セッションは失効しており、`gcloud auth login` の再実行が必要（対話入力を伴うため本人作業）
 - **依存ライブラリを確定**（§③参照）。`package.json` / `pnpm-lock.yaml` を作成し `pnpm install` 済み。BigQueryクライアントは今回は入れない判断とした
 - **画面モックアップを作成**（`docs/mockups/ui-mock.html`）— 外部依存ゼロの単体HTML。ダミーデータ36件で検索・絞り込み・並び替え・伏せモード（本文中の店舗名・電話番号・URLのマスクを含む）が実際に動く。営業メンバーへの共有用
 - **モックアップに「文章案」「依頼文」の2ステップを追加**（2026-09-21）。§①「文章案にして、依頼まで出せる」が受け入れ条件に落ちていなかった抜けを解消。文字数・通数・料金は申請書の実物から移植（§⑤参照）。Slackへの投稿はツールが行わず、コピーのみ
@@ -370,16 +383,50 @@ sms-corpus.md の収集方法（Slack・設定画面のスクリーンショッ�
   - 不具合: 伏せモードがテンプレート名・見出し（本文冒頭代用時）から漏れていたのを修正、選んだ文例のSMSの型が②に自動反映されず入庫連動の+36文字が乗らなかったのを修正、絞り込みリセットがキーワードまで消していたのを修正、本文の重複挿入を防止
   - ダミーデータ: 本文の大半が `〇〇様` 始まりだった点を実データで確認し是正（実データでは0件。§④の氏名伏せ跡511件/11,010件≒4.6%を再現する2件のみ残す）。フランチャイズが運営企業・元売ブランド・FCの3粒度混在だったのを、車検FC（コバック/速太郎/ホリデー車検）／車販FC（フラット7/ジョイカル/カルモ/コアラクラブ/スーパー乗るだけセット）の2軸に整理し、会社名も実データの形（運営企業の法人名）に合わせて架空の名前に作り直した
 
+### 2026-09-25 内田さん回答と実機の照合
+
+内田さんから接続情報の回答が届いた。実機を確認したところ、回答内容と実際の状態にズレがあった:
+
+| 内田さんの回答 | 実機の状態 |
+|---|---|
+| プロジェクトは `gnote-analytics` | 既知情報どおり。ただし `gcloud config` の project は未設定だった |
+| なりすまし用SAは不要、本人アカウントに直接権限 | **設計変更点**。impersonation 前提だった箇所を全て本人アカウント認証に修正済み（本ファイル・`engineer-consultation.md`・`triage-record.md`） |
+| gcloud は入っていないと思われる | **導入済み**（2026-09-18、gcloud 585.0.0 / bq 2.1.38） |
+| firewall に `bigquery.googleapis.com` 追加が必要 | **追加済み**。実測でも到達できていた |
+
+実際に `bq ls` を実行したところ、内田さんの回答にない**別の障害**が判明した:
+- Google API の IP ローテーションに ipset が追従しておらず `oauth2.googleapis.com` で `No route to host`（詳細は §④ のIPローテーション対策を参照。対策済み・要リビルド）
+- `gcloud auth login` のセッションが失効しており `Reauthentication failed`（対話入力が必要なため本人が再実行）
+
+### ✅ 完了（2026-09-25）: BigQuery からのテンプレート取得
+
+- Rebuild Container 完了。IPローテーション対策（`refresh-allowed-ips.sh`）稼働確認済み
+  - ⚠ Rebuild後の初回起動で、リフレッシャが `postStartCommand` 経由で自動起動しない不具合が発生（`fix-permissions.sh` の成否に `--start` が引きずられる構造だったため）。`devcontainer.json` の実行順序を修正し、ターミナル起動時に自動復旧を試みる仕組み（`/etc/profile.d/99-firewall-refresh-status.sh`）も追加済み。次回リビルドから反映される
+- `gcloud auth login` 実施（`haruki.yoneyama@inter-zone.jp`）、`gcloud config set project gnote-analytics` 実施
+- ビュー5本の正式名確定: `vw_sms_templates`（文面・設定）／`vw_sms_template_usage`（送信実績）／`vw_sms_deliveries`（配信設定）／`vw_sms_delivery_batches`（配信バッチ）／`vw_sms_send_results`（送信結果）
+- `scripts/fetch-templates.sh` 実装。`vw_sms_templates` を主に `vw_sms_template_usage` を `template_id` で LEFT JOIN（送信実績0件のテンプレートも残すため INNER JOIN にしていない）。`has_platelike`（ナンバーらしき記載）はキャッシュに含めない設計とした（アプリ側フィルタではなく、そもそもローカルの実データキャッシュに入れない方が漏洩時の被害が小さいため）
+- `data/templates.json` を生成。**11,010件**・最多送信 **53,116通** と、内田さんの事前検証（§⑧）にぴったり一致し、データの整合性を確認済み。スキャン量は約78.5MB（dry-run で確認済み）
+- `git check-ignore` で `data/` が `.gitignore:10` により除外されていることを確認済み（コミットされない）
+
+### ✅ 完了（2026-09-25 確認）: モックアップのフィードバック収集
+
+- デザインレビュー2回（2026-09-21、2026-09-24「社内MTG プランナーAI活用」）済み。指摘は直近コミット群（`9e09511`〜`735ab87` 等）で反映済み
+  - 補足: 本プロジェクトでは「営業」と「プランナー」は同義（同一の職種を指す呼び方の違い）。部署が別という意味ではない
+- **営業部長2名へのモックアップ共有・フィードバック収集も完了**（2026-09-25 米山さん確認）。STATUS.md の当該タスクは done に更新
+- 上記2つは同じ職種内での対象範囲の違い（現場メンバー向けの一般レビュー／部長級への個別共有）。「フィードバック収集」自体は完了だが、以下2点は未着手のまま残っている:
+  1. **「依頼出し」機能は業務推進部との意見交換が必要**（現状のスコープ外の部署が関わる機能のため、実装前に要調整）
+  2. **社内展開後、実運用フィードバックに基づくUI改善は継続的に発生する見込み**（Phase 1.5 以降の話。今は具体的なタスクではなく想定として記録するのみ）
+
 ### 次回セッションで最初にやるべき作業
 
-1. `docs/mockups/ui-mock.html` を営業メンバーに見せて、①検索 ②文章案 ③依頼文の一連の流れでフィードバックを集める
-2. 内田さんからの返信が届いていれば、接続情報（GCPプロジェクト名・サービスアカウントのメールアドレス）を設定し、`vw_sms_template_usage` にクエリを1本流す
-3. フィードバックがまとまったら、モックの見た目を踏まえて Next.js アプリの実装に着手する
+1. モックの見た目を踏まえて Next.js アプリの実装に着手する。データソースは `data/templates.json`（`pnpm fetch:templates` で再生成可能）
+2. §⑧ の未決事項（電話番号2,784件の裏取り・母数の不一致・リマインド側の切り分け）は、`data/templates.json` を使って手元で確認できるようになった
+3. 「依頼出し」機能の実装に入る前に、業務推進部との意見交換の場を設ける
 
-### 内田さん待ち（2026-09-21 時点で返信なし）
+### 内田さん待ち（解消済み）
 
-- BigQuery の接続情報（GCPプロジェクト名・impersonation 先のサービスアカウント）
-- §⑧「未決事項（内田さんに確認する）」の3件（電話番号2,784件の裏取り・母数の不一致・リマインド側の切り分け）
+- ~~BigQuery の接続情報（GCPプロジェクト名・impersonation 先のサービスアカウント）~~ → 2026-09-25 回答受領。impersonation は不要と判明
+- §⑧「未決事項（内田さんに確認する）」の3件（電話番号2,784件の裏取り・母数の不一致・リマインド側の切り分け）は接続後にクエリで裏を取る（未解決のまま）
 
 ---
 
