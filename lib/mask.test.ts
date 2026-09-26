@@ -58,6 +58,15 @@ describe("maskFreeText", () => {
     expect(out).not.toContain("example.com");
   });
 
+  it("http(s)を省略した裸のドメインも伏せる（2026-09-26 動作確認で発見した伏せ漏れ）", () => {
+    const out = maskFreeText(
+      "WEB（idemitsu-rh.co.jp/p/minamikanto/）でご予約ください",
+      null,
+    );
+    expect(out).not.toContain("idemitsu-rh.co.jp");
+    expect(out).not.toContain("minamikanto");
+  });
+
   it("フランチャイズ名単体は伏せない", () => {
     const out = maskFreeText("車検のコバックでは只今キャンペーン中です", null);
     expect(out).toContain("車検のコバック");

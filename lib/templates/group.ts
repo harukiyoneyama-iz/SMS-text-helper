@@ -4,6 +4,7 @@ import {
   applyMask,
   PHONE_REGEX,
   URL_REGEX,
+  BARE_DOMAIN_REGEX,
   GENERIC_STORE_SUFFIX_REGEX,
 } from "@/lib/mask";
 
@@ -39,6 +40,7 @@ export function normalizeForGrouping(body: string, company: string | null): stri
   out = out.replace(GENERIC_STORE_SUFFIX_REGEX, "");
   out = out.replace(PHONE_REGEX, "");
   out = out.replace(URL_REGEX, "");
+  out = out.replace(BARE_DOMAIN_REGEX, "");
   out = out.replace(/\s+/g, "");
 
   return out;

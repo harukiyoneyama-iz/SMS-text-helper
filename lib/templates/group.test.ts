@@ -51,6 +51,12 @@ describe("normalizeForGrouping", () => {
     expect(a).toBe(b);
   });
 
+  it("http(s)を省略した裸のドメインだけが違う本文は同じキーになる", () => {
+    const a = normalizeForGrouping("WEB（idemitsu-rh.co.jp/p/minamikanto/）でご予約ください", null);
+    const b = normalizeForGrouping("WEB（idemitsu-rh.co.jp/p/hokuriku/）でご予約ください", null);
+    expect(a).toBe(b);
+  });
+
   it("本文の内容そのものが違えば別キーになる", () => {
     const a = normalizeForGrouping("車検の時期が近づいてまいりました。", null);
     const b = normalizeForGrouping("オイル交換の時期です。", null);

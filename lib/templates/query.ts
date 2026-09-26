@@ -144,6 +144,8 @@ export interface FacetCounts {
   customerSegments: Record<string, number>;
   franchises: Record<string, number>;
   stages: Record<string, number>;
+  /** 通数（1〜10）ごとの件数。実際に出現する通数だけをサイドバーの金額フィルタに出すため */
+  priceTiers: Record<string, number>;
 }
 
 export function buildFacetCounts(pool: Template[]): FacetCounts {
@@ -158,6 +160,10 @@ export function buildFacetCounts(pool: Template[]): FacetCounts {
     customerSegments: countsByValue(pool, (t) => t.customerSegment || UNSET),
     franchises: countsByValue(pool, (t) => t.franchise || UNSET),
     stages: countsByValue(pool, (t) => t.stage || UNSET),
+    priceTiers: countsByValue(pool, (t) => {
+      const { segments } = bodyCharInfo(t.smsType, t.body);
+      return segments > 0 ? String(segments) : "";
+    }),
   };
 }
 

@@ -18,6 +18,11 @@ import { PERSONAL_NAME_PATTERN } from "@/lib/taxonomy/detect";
 
 export const PHONE_REGEX = /0\d{1,4}-\d{2,4}-\d{4}/g;
 export const URL_REGEX = /https?:\/\/[^\s]+/g;
+// http(s):// を省略した裸のドメイン（例: idemitsu-rh.co.jp/p/minamikanto/）。
+// 実データで発見された伏せ漏れ（2026-09-26 動作確認）。URL_REGEX は
+// スキーム付きしか拾わないため、ドメインらしき文字列を別途検出する
+export const BARE_DOMAIN_REGEX =
+  /\b[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.(?:co\.jp|ne\.jp|or\.jp|go\.jp|ed\.jp|ac\.jp|jp|com|net|org|info|biz)\b(?:\/[^\s、。！？!?）)】」』]*)?/g;
 // ブランド名に紐付かない「◯◯店／◯◯工場」。接頭辞2文字以上を要求することで
 // 「当店」「本店」「来店」「全店」等の一般語（接頭辞1文字）を誤検知しない
 export const GENERIC_STORE_SUFFIX_REGEX = /[一-龥ァ-ヶーA-Za-z0-9]{2,12}(?:店|工場|支店|営業所)/g;
@@ -59,6 +64,7 @@ export function maskFreeText(text: string, company: string | null): string {
 
   out = out.replace(PHONE_REGEX, (m) => "0●●-●●●-●●●●".slice(0, m.length));
   out = out.replace(URL_REGEX, () => "https://●●●●●●●●●●●●●●●");
+  out = out.replace(BARE_DOMAIN_REGEX, () => "●●●●●●●●●●●●●●●");
 
   return out;
 }

@@ -151,6 +151,14 @@ describe("queryTemplates", () => {
     expect(result.facets.products["タイヤ"]).toBeUndefined();
   });
 
+  it("金額フィルタの facet は実際に出現する通数だけを持つ", () => {
+    const a = classify(base({ id: "1", body: "あ".repeat(10) })); // 1通
+    const query = parseTemplatesQuery(q());
+    const result = queryTemplates([a], query);
+    expect(result.facets.priceTiers["1"]).toBe(1);
+    expect(result.facets.priceTiers["2"]).toBeUndefined();
+  });
+
   it("franchise の facet 合計は poolCount と一致する（UNSET 込みで数えるため）", () => {
     const a = classify(base({ id: "1", templateName: "xyz", body: "abc" })); // franchise未設定
     const b = classify(base({ id: "2", body: "車検のコバックでは只今キャンペーン中です" }));
