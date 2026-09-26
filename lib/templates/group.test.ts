@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { consolidateStoreVariants, normalizeForGrouping } from "./group";
+import { applyMaskToConsolidated, consolidateStoreVariants, normalizeForGrouping } from "./group";
 import { classify } from "@/lib/taxonomy/classify";
 import type { BaseTemplate } from "@/lib/templates/schema";
 
@@ -102,5 +102,36 @@ describe("consolidateStoreVariants", () => {
     const result = consolidateStoreVariants([t1, t2]);
     expect(result).toHaveLength(2);
     expect(result.every((r) => r.variantCount === 1)).toBe(true);
+  });
+});
+
+describe("applyMaskToConsolidated", () => {
+  it("代表行だけでなく店舗違いの一覧（variants）にもマスクをかける（伏せ漏れ防止）", () => {
+    const t1 = classify(
+      base({
+        id: "1",
+        company: "西崎自動車株式会社",
+        body: "車検のコバック岡山円山店です。お電話は086-000-1111まで。",
+        sendCount: 10,
+      }),
+    );
+    const t2 = classify(
+      base({
+        id: "2",
+        company: "丸山自動車株式会社",
+        body: "車検のコバック松山店です。お電話は089-000-2222まで。",
+        sendCount: 999,
+      }),
+    );
+    const [consolidated] = consolidateStoreVariants([t1, t2]);
+    const masked = applyMaskToConsolidated(consolidated!);
+
+    // 代表行
+    expect(masked.company).toBe("●●●●●●");
+    expect(masked.body).not.toContain("086-000-1111");
+    // 店舗違いの一覧（variants）側も同様に伏せる
+    expect(masked.variants).toHaveLength(1);
+    expect(masked.variants[0]!.company).toBe("●●●●●●");
+    expect(masked.variants[0]!.body).not.toContain("089-000-2222");
   });
 });
