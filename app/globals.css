@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f4f5f7;
+  --panel: #fff;
+  --border: #dfe3e8;
+  --text: #1f2933;
+  --text-sub: #616e7c;
+  --accent: #2b6cb0;
+  --accent-soft: #ebf4ff;
+  --chip-bg: #eef1f5;
+  --chip-active-bg: #2b6cb0;
+  --chip-active-text: #fff;
+  --warn-bg: #fff5f5;
+  --warn-border: #feb2b2;
+  --warn-text: #c53030;
+  --ok-bg: #f0fff4;
+  --ok-text: #2f855a;
+  --mask-bg: #2d3748;
+  --pick-bg: #ebf8ff;
+  --pick-border: #3182ce;
+
+  /* トークン外の直書き色（モック ui-mock.html に合わせる） */
+  --real-data-bg: #742a2a;
+  --bottom-bar-bg: #1a202c;
+  --status-unknown-bg: #fffaf0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    "Hiragino Kaku Gothic ProN",
+    "Yu Gothic",
+    Meiryo,
+    sans-serif;
+  font-size: 14px;
+}
+
+a {
+  color: var(--accent);
+}

@@ -5,6 +5,8 @@ node_modules/
 dist/
 build/
 coverage/
+next-env.d.ts
+*.tsbuildinfo
 
 # BigQuery から落としたキャッシュ（実データのため絶対にコミットしない）
 data/
