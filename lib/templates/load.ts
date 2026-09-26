@@ -10,11 +10,14 @@ import { classifyAll, type Template } from "@/lib/taxonomy/classify";
  */
 
 const DATA_FILE = path.join(process.cwd(), "data", "templates.json");
+// エラーメッセージにはコンテナ内の絶対パスを出さない（内部構造の開示を避けるため。
+// 2026-09-26 security-review 指摘）。ユーザーには実行すべきコマンドだけ伝われば十分
+const DATA_FILE_RELATIVE = path.join("data", "templates.json");
 
 export class TemplatesFileNotFoundError extends Error {
   constructor() {
     super(
-      `${DATA_FILE} が見つかりません。'pnpm fetch:templates' を実行してテンプレート一覧を取得してください。`,
+      `${DATA_FILE_RELATIVE} が見つかりません。'pnpm fetch:templates' を実行してテンプレート一覧を取得してください。`,
     );
     this.name = "TemplatesFileNotFoundError";
   }

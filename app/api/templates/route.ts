@@ -12,10 +12,10 @@ export async function GET(request: Request) {
     query = parseTemplatesQuery(searchParams);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "クエリパラメータが不正です", issues: err.issues },
-        { status: 400 },
-      );
+      // zod の issues（内部のスキーマ形状）はレスポンスに含めない。
+      // このAPIを叩くのは自分自身の画面だけで、詳細を画面に出す用途が無いため
+      // （2026-09-26 security-review 指摘）
+      return NextResponse.json({ error: "クエリパラメータが不正です" }, { status: 400 });
     }
     throw err;
   }
